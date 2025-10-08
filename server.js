@@ -1,83 +1,98 @@
+// server.js
 import express from "express";
-import fs from "fs";
-import { exec } from "child_process";
-import path from "path";
-import { fileURLToPath } from "url";
 import cors from "cors";
+import fs from "fs";
+import { spawn, exec } from "child_process";
+import path from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-// Buat folder temp kalau belum ada
-const tempDir = path.join(__dirname, "temp");
-if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+const TEMP_DIR = "./temp";
+if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR);
 
-// Fungsi untuk buat file sementara
-const makeTempFile = (ext) => {
-  const filename = `code_${Date.now()}.${ext}`;
-  return path.join(tempDir, filename);
-};
-
-// Endpoint utama
 app.post("/run", async (req, res) => {
-  const { language, code } = req.body;
+  const { language, code, input = "" } = req.body;
+  if (!language || !code)
+    return res.status(400).json({ error: "language dan code wajib diisi" });
 
-  if (!language || !code) {
-    return res.status(400).json({ error: "language dan code harus diisi" });
+  const timestamp = Date.now();
+  const fileBase = `code_${timestamp}`;
+  let filePath, exePath, compileCmd, runCmd;
+
+  if (language === "c") {
+    filePath = path.join(TEMP_DIR, `${fileBase}.c`);
+    exePath = path.join(TEMP_DIR, `${fileBase}.exe`);
+    compileCmd = `gcc "${filePath}" -o "${exePath}"`;
+    runCmd = exePath;
+  } else if (language === "cpp") {
+    filePath = path.join(TEMP_DIR, `${fileBase}.cpp`);
+    exePath = path.join(TEMP_DIR, `${fileBase}.exe`);
+    compileCmd = `g++ "${filePath}" -o "${exePath}"`;
+    runCmd = exePath;
+  } else if (language === "java") {
+    filePath = path.join(TEMP_DIR, `${fileBase}.java`);
+    compileCmd = `javac "${filePath}"`;
+    runCmd = `java -cp ${TEMP_DIR} ${fileBase}`;
+  } else {
+    return res.status(400).json({ error: "Bahasa tidak didukung" });
   }
 
-  let filename, command;
+  // Simpan kode ke file
+  fs.writeFileSync(filePath, code);
 
-  try {
-    switch (language.toLowerCase()) {
-      case "c": {
-        filename = makeTempFile("c");
-        fs.writeFileSync(filename, code);
-        const outputFile = filename.replace(".c", ".exe");
-        command = `gcc "${filename}" -o "${outputFile}" && "${outputFile}"`;
-        break;
-      }
-      case "cpp":
-      case "c++": {
-        filename = makeTempFile("cpp");
-        fs.writeFileSync(filename, code);
-        const outputFile = filename.replace(".cpp", ".exe");
-        command = `g++ "${filename}" -o "${outputFile}" && "${outputFile}"`;
-        break;
-      }
-      case "java": {
-        filename = makeTempFile("java");
-        fs.writeFileSync(filename, code);
-        const classname = path.basename(filename, ".java");
-        const dir = path.dirname(filename);
-        command = `javac "${filename}" && java -cp "${dir}" ${classname}`;
-        break;
-      }
-      default:
-        return res.status(400).json({ error: "Bahasa tidak didukung" });
+  // Compile dulu
+  exec(compileCmd, (compileErr, _, compileStderr) => {
+    if (compileErr) {
+      return res.status(400).json({ error: compileStderr.toString() });
     }
 
-    exec(command, { timeout: 8000 }, (err, stdout, stderr) => {
-      if (err) {
-        return res.json({
-          success: false,
-          error: stderr || err.message,
+    const [command, ...args] =
+      language === "java" ? runCmd.split(" ") : [runCmd];
+    const runProcess = spawn(command, args, { cwd: process.cwd() });
+
+    let output = "";
+    let error = "";
+    let killed = false;
+
+    // Set timeout 3 detik
+    const timeout = setTimeout(() => {
+      killed = true;
+      runProcess.kill();
+    }, 3000);
+
+    // Kirim input awal
+    if (input.trim() !== "") {
+      runProcess.stdin.write(input + "\n");
+    }
+    runProcess.stdin.end();
+
+    runProcess.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    runProcess.stderr.on("data", (data) => {
+      error += data.toString();
+    });
+
+    runProcess.on("close", (code) => {
+      clearTimeout(timeout);
+
+      if (killed) {
+        return res.status(400).json({
+          error:
+            "Program berjalan terlalu lama atau menunggu input berikutnya (kemungkinan loop tak berujung).",
         });
       }
-      return res.json({
-        success: true,
-        output: stdout,
-      });
+
+      if (error) {
+        return res.status(400).json({ error });
+      }
+
+      res.json({ output: output.trim(), exitCode: code });
     });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  });
 });
 
-const PORT = 3000;
-app.listen(PORT, () =>
-  console.log(`Server running on http://localhost:${PORT}`)
-);
+app.listen(3000, () => console.log("Server running on http://localhost:3000"));
