@@ -1,5 +1,3 @@
-// server.js
-import express from "express";
 import cors from "cors";
 import fs from "fs";
 import { spawn, exec } from "child_process";
