@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import db from "../config/database.js";
+import { db } from "./index.js";
 
 const User = db.define("users", {
   uid: {
@@ -26,14 +26,6 @@ const User = db.define("users", {
   password: {
     type: DataTypes.STRING,
     allowNull: true,
-  },
-  class_code: {
-    type: DataTypes.STRING(64),
-    allowNull: true,
-    references: {
-      model: "classrooms",
-      key: "class_code",
-    },
   },
 });
 

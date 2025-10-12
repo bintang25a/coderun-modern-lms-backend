@@ -1,14 +1,26 @@
 import { DataTypes } from "sequelize";
-import db from "../config/database.js";
+import { db } from "./index.js";
 
 const UserClassroom = db.define("user_classroom", {
   uid: {
     type: DataTypes.STRING(16),
     allowNull: false,
+    references: {
+      model: "users",
+      key: "uid",
+    },
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
   },
   class_code: {
     type: DataTypes.STRING(64),
     allowNull: false,
+    references: {
+      model: "classrooms",
+      key: "class_code",
+    },
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
   },
 });
 

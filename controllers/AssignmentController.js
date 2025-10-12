@@ -1,122 +1,94 @@
-import { Classroom } from "../models/index.js";
+import { Assignment } from "../models/index.js";
 
 export const index = async (req, res) => {
   try {
-    const classrooms = await Classroom.findAll({
+    const assignments = await Assignment.findAll({
+      where: {
+        class_code: req.params.class_code,
+      },
       include: [
         {
-          association: Classroom.associations.praktikan,
-          as: "praktikan",
-          attributes: ["uid", "name", "email"],
+          association: Assignment.associations.classroom,
+          as: "classroom",
+          attributes: ["name"],
           through: {
             attributes: [],
           },
-        },
-        {
-          association: Classroom.associations.tutor,
-          as: "tutor",
-          attributes: ["uid", "name", "email"],
-        },
-        {
-          association: Classroom.associations.asisten,
-          as: "asisten",
-          attributes: ["uid", "name", "email"],
         },
       ],
     });
 
     res.status(200).json({
       success: true,
-      message: "Display all classrooms successfully",
-      data: classrooms,
+      message: "Display all assignments successfully",
+      data: assignments,
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Display all classrooms failed",
+      message: "Display all assignments failed",
     });
   }
 };
 
 export const show = async (req, res) => {
   try {
-    const classroom = await Classroom.findOne({
+    const assignment = await Assignment.findOne({
       where: {
-        class_code: req.params.class_code,
+        assignment_number: req.params.assignment_number,
       },
       include: [
         {
-          association: Classroom.associations.praktikan,
-          as: "praktikan",
-          attributes: ["uid", "name", "email"],
+          association: Assignment.associations.classroom,
+          as: "classroom",
+          attributes: ["name"],
           through: {
             attributes: [],
           },
         },
-        {
-          association: Classroom.associations.tutor,
-          as: "tutor",
-          attributes: ["uid", "name", "email"],
-        },
-        {
-          association: Classroom.associations.asisten,
-          as: "asisten",
-          attributes: ["uid", "name", "email"],
-        },
       ],
     });
 
-    if (!classroom) {
+    if (!assignment) {
       return res.status(404).json({
         success: false,
-        message: "Display classroom failed, Classroom not found",
+        message: "Display assignment failed, Assignment not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: "Display classroom successfully",
-      data: classroom,
+      message: "Display assignment successfully",
+      data: assignment,
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Display classroom failed",
+      message: "Display assignment failed",
     });
   }
 };
 
 export const store = async (req, res) => {
-  const { class_code, name, uid_asisten1, uid_asisten2 } = req.body;
+  const { title, description, class_code, asisten_uid, answer_key } = req.body;
 
-  if (!class_code || !name) {
+  if ((!title, !description, !class_code, !asisten_uid, !answer_key)) {
     return res.status(400).json({
       success: false,
-      message: "Create classroom failed, Field cannot empty",
-    });
-  }
-
-  const classroom = await Classroom.findOne({
-    where: {
-      class_code: class_code,
-    },
-  });
-
-  if (classroom) {
-    return res.status(400).json({
-      success: false,
-      message: "Create classroom failed, Classroom code already exist",
+      message: "Create assignment failed, Field cannot empty",
     });
   }
 
   try {
-    await Classroom.create({
+    await Assignment.create({
+      assignment_number,
+      title,
+      description,
       class_code,
-      name,
-      uid_asisten1,
-      uid_asisten2,
+      asisten_uid,
+      answer_key,
     });
 
     res.status(201).json({

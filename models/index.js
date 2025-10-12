@@ -2,24 +2,17 @@ import db from "../config/database.js";
 import User from "./UserModel.js";
 import Classroom from "./ClassroomModel.js";
 import UserClassroom from "./UserClassroomModel.js";
-
-// Loan.belongsTo(User, {
-//   foreignKey: "id_peminjam",
-//   targetKey: "uid",
-// });
-// Loan.belongsTo(Room, {
-//   foreignKey: "kode_ruangan",
-//   targetKey: "kode_ruangan",
-// });
+import Assignment from "./AssignmentModel.js";
 
 User.belongsToMany(Classroom, {
-  through: "user_classroom",
+  through: UserClassroom,
   foreignKey: "uid",
   otherKey: "class_code",
   as: "classroom",
 });
+
 Classroom.belongsToMany(User, {
-  through: "user_classroom",
+  through: UserClassroom,
   foreignKey: "class_code",
   otherKey: "uid",
   as: "praktikan",
@@ -28,16 +21,33 @@ Classroom.belongsTo(User, {
   foreignKey: "uid_asisten1",
   sourceKey: "uid",
   as: "tutor",
+  constraints: false,
 });
 Classroom.belongsTo(User, {
   foreignKey: "uid_asisten2",
   sourceKey: "uid",
   as: "asisten",
+  constraints: false,
+});
+Classroom.hasMany(Assignment, {
+  foreignKey: "class_code",
+  sourceKey: "class_code",
+  as: "assignment",
 });
 
-// Room.hasMany(Loan, {
-//   foreignKey: "kode_ruangan",
-//   sourceKey: "kode_ruangan",
-// });
+UserClassroom.belongsTo(User, {
+  foreignKey: "uid",
+  as: "user",
+});
+UserClassroom.belongsTo(Classroom, {
+  foreignKey: "class_code",
+  as: "classroom",
+});
 
-export { db, User, Classroom };
+Assignment.belongsTo(Classroom, {
+  foreignKey: "class_code",
+  sourceKey: "class_code",
+  as: "classroom",
+});
+
+export { db, User, Classroom, UserClassroom, Assignment };

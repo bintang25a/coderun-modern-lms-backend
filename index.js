@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import SequelizeStore from "connect-session-sequelize";
 import UserRoute from "./routes/UserRoute.js";
 import ClassroomRoute from "./routes/ClassroomRoute.js";
+import UserClassroomRoute from "./routes/UserClassroomRoute.js";
 import AuthRoute from "./routes/AuthRoute.js";
 import { db } from "./models/index.js";
 
@@ -47,26 +48,31 @@ app.use(
 app.use(express.json());
 app.use(UserRoute);
 app.use(ClassroomRoute);
+app.use(UserClassroomRoute);
 app.use(AuthRoute);
 app.use("/rooms/images", express.static("uploads"));
 
 // (async () => {
 //   try {
+//     await db.query("SET FOREIGN_KEY_CHECKS = 0");
 //     await db.sync({ force: true });
+
 //     console.log("Database synced (tables created)");
 
 //     const { default: UserSeeder } = await import("./seed/UserSeeder.js");
 //     const { default: ClassroomSeeder } = await import(
 //       "./seed/ClassroomSeeder.js"
 //     );
+//     const { default: UserClassroomSeeder } = await import(
+//       "./seed/UserClassroomSeeder.js"
+//     );
 
 //     await UserSeeder();
 //     await ClassroomSeeder();
+//     await UserClassroomSeeder();
 //   } catch (err) {
 //     console.error("Gagal sync:", err);
 //   }
 // })();
-
-store.sync({ alter: true });
 
 app.listen(port, () => console.log(`Server run on http://localhost:${port}`));

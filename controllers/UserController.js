@@ -1,7 +1,5 @@
-import User from "../models/UserModel.js";
+import { User } from "../models/index.js";
 import bcrypt from "bcrypt";
-
-import Classroom from "../models/ClassroomModel.js";
 
 export const index = async (req, res) => {
   try {
@@ -11,17 +9,27 @@ export const index = async (req, res) => {
       },
       include: [
         {
-          model: Classroom,
+          association: User.associations.classroom,
           as: "classroom",
           attributes: ["name"],
+          through: {
+            attributes: [],
+          },
         },
       ],
     });
 
-    res.status(200).json(users);
+    res.status(200).json({
+      success: true,
+      message: "Display all users successfully",
+      data: users,
+    });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ msg: "Display all users failed" });
+    res.status(500).json({
+      success: false,
+      message: "Display all users failed",
+    });
   }
 };
 
@@ -36,21 +44,34 @@ export const show = async (req, res) => {
       },
       include: [
         {
-          model: Classroom,
+          association: User.associations.classroom,
           as: "classroom",
           attributes: ["name"],
+          through: {
+            attributes: [],
+          },
         },
       ],
     });
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Display user failed, User not found",
+      });
     }
 
-    res.status(200).json(user);
+    res.status(200).json({
+      success: true,
+      message: "Display user successfully",
+      data: user,
+    });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ msg: "Display one user failed" });
+    res.status(500).json({
+      success: false,
+      message: "Display user failed",
+    });
   }
 };
 
@@ -59,11 +80,17 @@ export const store = async (req, res) => {
     req.body;
 
   if (!uid || !name || !phone_number || !email || !role || !password) {
-    return res.status(400).json({ msg: "Field cannot empty" });
+    return res.status(400).json({
+      success: false,
+      message: "Create user failed, Field cannot empty",
+    });
   }
 
   if (role !== "Praktikan" && role !== "Asisten" && role !== "Admin") {
-    return res.status(400).json({ msg: "Invalid role option" });
+    return res.status(400).json({
+      success: false,
+      message: "Create user failed, Invalid role option",
+    });
   }
 
   const hashPassword = await bcrypt.hash(password, 10);
@@ -79,10 +106,16 @@ export const store = async (req, res) => {
       class_code,
     });
 
-    res.status(201).json({ msg: "Create user successfully" });
+    res.status(201).json({
+      success: true,
+      message: "Create user successfully",
+    });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ msg: "Create user failed" });
+    res.status(500).json({
+      success: false,
+      message: "Create user failed",
+    });
   }
 };
 
@@ -96,15 +129,24 @@ export const update = async (req, res) => {
   });
 
   if (!user) {
-    return res.status(404).json({ msg: "User not found" });
+    return res.status(404).json({
+      success: false,
+      message: "Update user failed, User not found",
+    });
   }
 
   if (!name || !phone_number || !email || !role) {
-    return res.status(400).json({ msg: "Field cannot empty" });
+    return res.status(400).json({
+      success: true,
+      message: "Update user failed, Field cannot empty",
+    });
   }
 
   if (role !== "Praktikan" && role !== "Asisten" && role !== "Admin") {
-    return res.status(400).json({ msg: "Invalid role option" });
+    return res.status(400).json({
+      success: false,
+      message: "Update user failed, Invalid role option",
+    });
   }
 
   let hashPassword;
@@ -131,10 +173,16 @@ export const update = async (req, res) => {
       }
     );
 
-    res.status(200).json({ msg: "Update user successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Update user successfully",
+    });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ msg: "Update user failed" });
+    res.status(500).json({
+      success: false,
+      message: "Update user failed",
+    });
   }
 };
 
@@ -146,7 +194,10 @@ export const destroy = async (req, res) => {
   });
 
   if (!user) {
-    return res.status(404).json({ msg: "User not found" });
+    return res.status(404).json({
+      success: true,
+      message: "Delete user failed, User not found",
+    });
   }
 
   try {
@@ -156,9 +207,15 @@ export const destroy = async (req, res) => {
       },
     });
 
-    res.status(200).json({ msg: "Delete user successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Delete user successfully",
+    });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ msg: "Delete user failed" });
+    res.status(500).json({
+      success: false,
+      message: "Delete user failed",
+    });
   }
 };
