@@ -3,7 +3,7 @@ import db from "../config/database.js";
 
 const Classroom = db.define("classrooms", {
   class_code: {
-    type: DataTypes.STRING(64),
+    type: DataTypes.STRING(32),
     allowNull: false,
     primaryKey: true,
   },
@@ -11,7 +11,7 @@ const Classroom = db.define("classrooms", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  uid_asisten1: {
+  assistant1_uid: {
     type: DataTypes.STRING(16),
     allowNull: true,
     references: {
@@ -19,7 +19,7 @@ const Classroom = db.define("classrooms", {
       key: "uid",
     },
   },
-  uid_asisten2: {
+  assistant2_uid: {
     type: DataTypes.STRING(16),
     allowNull: true,
     references: {

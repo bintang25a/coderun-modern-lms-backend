@@ -3,7 +3,7 @@ import { db } from "./index.js";
 
 const Assignment = db.define("assignments", {
   assignment_number: {
-    type: DataTypes.STRING(16),
+    type: DataTypes.STRING(36),
     allowNull: false,
     primaryKey: true,
   },
@@ -11,19 +11,19 @@ const Assignment = db.define("assignments", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  desription: {
+  description: {
     type: DataTypes.TEXT,
     allowNull: false,
   },
   class_code: {
-    type: DataTypes.STRING(64),
+    type: DataTypes.STRING(32),
     allowNull: false,
     references: {
       model: "classrooms",
       key: "class_code",
     },
   },
-  asisten_uid: {
+  assistant_uid: {
     type: DataTypes.STRING(16),
     allowNull: false,
     references: {

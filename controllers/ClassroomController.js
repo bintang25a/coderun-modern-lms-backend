@@ -1,9 +1,21 @@
 import { Classroom } from "../models/index.js";
+import fs from "fs";
+import path from "path";
 
 export const index = async (req, res) => {
   try {
     const classrooms = await Classroom.findAll({
       include: [
+        {
+          association: Classroom.associations.tutor,
+          as: "tutor",
+          attributes: ["uid", "name", "email"],
+        },
+        {
+          association: Classroom.associations.assistant,
+          as: "assistant",
+          attributes: ["uid", "name", "email"],
+        },
         {
           association: Classroom.associations.praktikan,
           as: "praktikan",
@@ -13,14 +25,9 @@ export const index = async (req, res) => {
           },
         },
         {
-          association: Classroom.associations.tutor,
-          as: "tutor",
-          attributes: ["uid", "name", "email"],
-        },
-        {
-          association: Classroom.associations.asisten,
-          as: "asisten",
-          attributes: ["uid", "name", "email"],
+          association: Classroom.associations.assignments,
+          as: "assignments",
+          attributes: ["assignment_number", "title", "description"],
         },
       ],
     });
@@ -47,6 +54,16 @@ export const show = async (req, res) => {
       },
       include: [
         {
+          association: Classroom.associations.tutor,
+          as: "tutor",
+          attributes: ["uid", "name", "email"],
+        },
+        {
+          association: Classroom.associations.assistant,
+          as: "assistant",
+          attributes: ["uid", "name", "email"],
+        },
+        {
           association: Classroom.associations.praktikan,
           as: "praktikan",
           attributes: ["uid", "name", "email"],
@@ -55,14 +72,9 @@ export const show = async (req, res) => {
           },
         },
         {
-          association: Classroom.associations.tutor,
-          as: "tutor",
-          attributes: ["uid", "name", "email"],
-        },
-        {
-          association: Classroom.associations.asisten,
-          as: "asisten",
-          attributes: ["uid", "name", "email"],
+          association: Classroom.associations.assignments,
+          as: "assignments",
+          attributes: ["assignment_number", "title", "description"],
         },
       ],
     });
@@ -89,7 +101,7 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { class_code, name, uid_asisten1, uid_asisten2 } = req.body;
+  const { class_code, name, assistant1_uid, assistant2_uid } = req.body;
 
   if (!class_code || !name) {
     return res.status(400).json({
@@ -112,11 +124,17 @@ export const store = async (req, res) => {
   }
 
   try {
+    const srcPath = path.resolve("src");
+    const classroomPath = path.join(srcPath, "classrooms", class_code);
+    if (!fs.existsSync(classroomPath)) {
+      fs.mkdirSync(classroomPath, { recursive: true });
+    }
+
     await Classroom.create({
       class_code,
       name,
-      uid_asisten1,
-      uid_asisten2,
+      assistant1_uid,
+      assistant2_uid,
     });
 
     res.status(201).json({
@@ -133,7 +151,7 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { name, uid_asisten1, uid_asisten2 } = req.body;
+  const { name, assistant1_uid, assistant2_uid } = req.body;
 
   const classroom = await Classroom.findOne({
     where: {
@@ -159,8 +177,8 @@ export const update = async (req, res) => {
     await classroom.update(
       {
         name,
-        uid_asisten1,
-        uid_asisten2,
+        assistant1_uid,
+        assistant2_uid,
       },
       {
         where: {
@@ -197,6 +215,16 @@ export const destroy = async (req, res) => {
   }
 
   try {
+    const srcPath = path.resolve("src");
+    const classroomPath = path.join(
+      srcPath,
+      "classrooms",
+      classroom.class_code
+    );
+    if (fs.existsSync(classroomPath)) {
+      fs.unlinkSync(classroomPath);
+    }
+
     await Classroom.destroy({
       where: {
         class_code: req.params.class_code,

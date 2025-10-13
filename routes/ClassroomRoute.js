@@ -6,7 +6,6 @@ import {
   update,
   destroy,
 } from "../controllers/ClassroomController.js";
-import { verifyUser, adminOnly } from "../middlewares/AuthUser.js";
 
 const router = express.Router();
 

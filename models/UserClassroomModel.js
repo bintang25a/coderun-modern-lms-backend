@@ -13,7 +13,7 @@ const UserClassroom = db.define("user_classroom", {
     onUpdate: "CASCADE",
   },
   class_code: {
-    type: DataTypes.STRING(64),
+    type: DataTypes.STRING(32),
     allowNull: false,
     references: {
       model: "classrooms",

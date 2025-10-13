@@ -18,21 +18,21 @@ Classroom.belongsToMany(User, {
   as: "praktikan",
 });
 Classroom.belongsTo(User, {
-  foreignKey: "uid_asisten1",
+  foreignKey: "assistant1_uid",
   sourceKey: "uid",
   as: "tutor",
   constraints: false,
 });
 Classroom.belongsTo(User, {
-  foreignKey: "uid_asisten2",
+  foreignKey: "assistant2_uid",
   sourceKey: "uid",
-  as: "asisten",
+  as: "assistant",
   constraints: false,
 });
 Classroom.hasMany(Assignment, {
   foreignKey: "class_code",
   sourceKey: "class_code",
-  as: "assignment",
+  as: "assignments",
 });
 
 UserClassroom.belongsTo(User, {

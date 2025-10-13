@@ -1,6 +1,9 @@
 import express from "express";
 import session from "express-session";
 import cors from "cors";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
 import dotenv from "dotenv";
 import SequelizeStore from "connect-session-sequelize";
 import UserRoute from "./routes/UserRoute.js";
@@ -45,12 +48,26 @@ app.use(
   })
 );
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json());
 app.use(UserRoute);
 app.use(ClassroomRoute);
 app.use(UserClassroomRoute);
 app.use(AuthRoute);
-app.use("/rooms/images", express.static("uploads"));
+
+app.use("/users/photo", express.static(path.join(__dirname, "src/profiles")));
+
+const srcPath = path.resolve("src");
+if (!fs.existsSync(srcPath)) {
+  fs.mkdirSync(srcPath);
+}
+
+const classroomPath = "./src/classrooms";
+if (!fs.existsSync(classroomPath)) {
+  fs.mkdirSync(classroomPath);
+}
 
 // (async () => {
 //   try {

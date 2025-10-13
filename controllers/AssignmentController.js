@@ -1,4 +1,6 @@
 import { Assignment } from "../models/index.js";
+import fs from "fs";
+import path from "path";
 
 export const index = async (req, res) => {
   try {
@@ -11,9 +13,6 @@ export const index = async (req, res) => {
           association: Assignment.associations.classroom,
           as: "classroom",
           attributes: ["name"],
-          through: {
-            attributes: [],
-          },
         },
       ],
     });
@@ -43,9 +42,6 @@ export const show = async (req, res) => {
           association: Assignment.associations.classroom,
           as: "classroom",
           attributes: ["name"],
-          through: {
-            attributes: [],
-          },
         },
       ],
     });
@@ -72,14 +68,23 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { title, description, class_code, asisten_uid, answer_key } = req.body;
+  const { title, description, class_code, assistant_uid } = req.body;
 
-  if ((!title, !description, !class_code, !asisten_uid, !answer_key)) {
+  if ((!title, !description, !class_code, !assistant_uid)) {
     return res.status(400).json({
       success: false,
       message: "Create assignment failed, Field cannot empty",
     });
   }
+
+  const count = await Assignment.count({
+    where: {
+      class_code,
+    },
+  });
+
+  const assignment_number = req.assignment_number;
+  const answer_key = req.file ? req.file.filename : null;
 
   try {
     await Assignment.create({
@@ -87,103 +92,136 @@ export const store = async (req, res) => {
       title,
       description,
       class_code,
-      asisten_uid,
+      assistant_uid,
       answer_key,
     });
 
     res.status(201).json({
       success: true,
-      message: "Create classroom successfully",
+      message: "Create assignment successfully",
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Create classroom failed",
+      message: "Create assignment failed",
     });
   }
 };
 
 export const update = async (req, res) => {
-  const { name, uid_asisten1, uid_asisten2 } = req.body;
+  const { title, description, class_code, assistant_uid } = req.body;
 
-  const classroom = await Classroom.findOne({
+  const assignment = await Assignment.findOne({
     where: {
-      class_code: req.params.class_code,
+      assignment_number: req.params.assignment_number,
     },
   });
 
-  if (!classroom) {
+  if (!assignment) {
     return res.status(404).json({
       success: false,
-      message: "Update classroom failed, Classroom not found",
+      message: "Update assignment failed, Assignment not found",
     });
   }
 
-  if (!name) {
+  if ((!title, !description, !class_code, !assistant_uid)) {
     return res.status(400).json({
       success: false,
-      message: "Update classroom failed, Field cannot empty",
+      message: "Update assignment failed, Field cannot empty",
     });
   }
 
   try {
-    await classroom.update(
+    let answer_key = assignment.answer_key;
+    if (req.file) {
+      answer_key = req.file.filename;
+
+      if (assignment.answer_key) {
+        const oldFilePath = path.join(
+          "src/classrooms",
+          class_code,
+          assignment.assignment_number,
+          assignment.answer_key
+        );
+
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      }
+    }
+
+    await Assignment.update(
       {
-        name,
-        uid_asisten1,
-        uid_asisten2,
+        title,
+        description,
+        class_code,
+        assistant_uid,
+        answer_key,
       },
       {
         where: {
-          class_code: req.params.class_code,
+          assignment_number: req.params.assignment_number,
         },
       }
     );
 
     res.status(200).json({
       success: true,
-      message: "Update classroom successfully",
+      message: "Update assignment successfully",
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Update classroom failed",
+      message: "Update assignment failed",
     });
   }
 };
 
 export const destroy = async (req, res) => {
-  const classroom = await Classroom.findOne({
+  const assignment = await Assignment.findOne({
     where: {
-      class_code: req.params.class_code,
+      assignment_number: req.params.assignment_number,
     },
   });
 
-  if (!classroom) {
+  if (!assignment) {
     return res.status(404).json({
       success: false,
-      message: "Delete classroom failed, Classroom not found",
+      message: "Delete assignment failed, Assignment not found",
     });
   }
 
   try {
-    await Classroom.destroy({
+    if (assignment.answer_key) {
+      const oldFilePath = path.join(
+        "src/classrooms",
+        class_code,
+        assignment.assignment_number,
+        assignment.answer_key
+      );
+
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath);
+      }
+    }
+
+    await Assignment.destroy({
       where: {
-        class_code: req.params.class_code,
+        assignment_number: req.params.assignment_number,
       },
     });
 
     res.status(200).json({
       success: true,
-      message: "Delete classroom successfully",
+      message: "Delete assignment successfully",
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Delete classroom failed",
+      message: "Delete assignment failed",
     });
   }
 };

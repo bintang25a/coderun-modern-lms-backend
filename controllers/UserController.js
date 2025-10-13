@@ -1,5 +1,7 @@
 import { User } from "../models/index.js";
 import bcrypt from "bcrypt";
+import fs from "fs";
+import path from "path";
 
 export const index = async (req, res) => {
   try {
@@ -86,6 +88,8 @@ export const store = async (req, res) => {
     });
   }
 
+  const photo = req.file ? req.file.filename : null;
+
   if (role !== "Praktikan" && role !== "Asisten" && role !== "Admin") {
     return res.status(400).json({
       success: false,
@@ -104,6 +108,7 @@ export const store = async (req, res) => {
       role,
       password: hashPassword,
       class_code,
+      photo,
     });
 
     res.status(201).json({
@@ -157,6 +162,19 @@ export const update = async (req, res) => {
   }
 
   try {
+    let photo = user.photo;
+    if (req.file) {
+      photo = req.file.filename;
+
+      if (user.photo) {
+        const oldFilePath = path.join("src/profiles", user.photo);
+
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      }
+    }
+
     await user.update(
       {
         name,
@@ -165,6 +183,7 @@ export const update = async (req, res) => {
         role,
         password: hashPassword,
         class_code,
+        photo,
       },
       {
         where: {
@@ -201,6 +220,14 @@ export const destroy = async (req, res) => {
   }
 
   try {
+    if (user.photo) {
+      const oldFilePath = path.join("src/profiles", user.photo);
+
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath);
+      }
+    }
+
     await User.destroy({
       where: {
         uid: req.params.uid,
