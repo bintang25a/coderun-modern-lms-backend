@@ -7,13 +7,13 @@ const Assignment = db.define("assignments", {
     allowNull: false,
     primaryKey: true,
   },
-  title: {
-    type: DataTypes.STRING,
+  assistant_uid: {
+    type: DataTypes.STRING(16),
     allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: false,
+    references: {
+      model: "users",
+      key: "uid",
+    },
   },
   class_code: {
     type: DataTypes.STRING(32),
@@ -23,17 +23,25 @@ const Assignment = db.define("assignments", {
       key: "class_code",
     },
   },
-  assistant_uid: {
-    type: DataTypes.STRING(16),
+  title: {
+    type: DataTypes.STRING,
     allowNull: false,
-    references: {
-      model: "users",
-      key: "uid",
-    },
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false,
   },
   answer_key: {
     type: DataTypes.TEXT,
     allowNull: true,
+  },
+  start_time: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  end_time: {
+    type: DataTypes.DATE,
+    allowNull: false,
   },
 });
 

@@ -8,24 +8,19 @@ const srcPath = path.resolve("src");
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     try {
-      // Ambil class_code dari request body (pastikan dikirim dari frontend)
-      const { class_code, asisten_uid, uid } = req.body;
-      const identifier = asisten_uid ? "answer_key" : uid || undefined;
+      const class_code = req.params.class_code;
 
-      if (!class_code || !identifier) {
-        return cb(new Error("class_code harus disertakan di body request"));
+      if (!class_code) {
+        return cb(new Error("Class code unidentified"));
       }
 
-      // Buat folder dinamis berdasarkan class_code
       const classFolder = path.join(
         srcPath,
         "classrooms",
         class_code,
-        req.assignment_number,
-        identifier
+        req.assignment_number
       );
 
-      // Buat folder jika belum ada
       if (!fs.existsSync(classFolder)) {
         fs.mkdirSync(classFolder, { recursive: true });
       }
@@ -37,7 +32,9 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    const fileName = path.extname(file.originalname);
+    const { assistant_uid, uid } = req.body;
+    const identifier = assistant_uid ? "answer_key" : uid || undefined;
+    const fileName = `${identifier}${path.extname(file.originalname)}`;
 
     cb(null, fileName);
   },
@@ -45,13 +42,13 @@ const storage = multer.diskStorage({
 
 // Filter ekstensi file
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = /\.(c|cpp|java|py)$/i;
+  const allowedExtensions = /\.(?:c|cpp|java|py|zip|rar|pdf)$/i;
   const ext = path.extname(file.originalname).toLowerCase();
 
   if (allowedExtensions.test(ext)) {
     cb(null, true);
   } else {
-    cb(new Error("Hanya file .c, .cpp, .java, atau .py yang diperbolehkan"));
+    cb(new Error("Only file c, cpp, java, py, zip, rar, pdf allowed"));
   }
 };
 

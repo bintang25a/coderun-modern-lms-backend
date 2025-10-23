@@ -9,6 +9,7 @@ import SequelizeStore from "connect-session-sequelize";
 import UserRoute from "./routes/UserRoute.js";
 import ClassroomRoute from "./routes/ClassroomRoute.js";
 import UserClassroomRoute from "./routes/UserClassroomRoute.js";
+import AssignmentRoute from "./routes/AssignmentRoute.js";
 import AuthRoute from "./routes/AuthRoute.js";
 import { db } from "./models/index.js";
 
@@ -55,6 +56,7 @@ app.use(express.json());
 app.use(UserRoute);
 app.use(ClassroomRoute);
 app.use(UserClassroomRoute);
+app.use(AssignmentRoute);
 app.use(AuthRoute);
 
 app.use("/users/photo", express.static(path.join(__dirname, "src/profiles")));

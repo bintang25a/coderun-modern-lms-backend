@@ -7,22 +7,22 @@ import {
   destroy,
 } from "../controllers/AssignmentController.js";
 import { generateAssignmentNumber } from "../middlewares/GenerateUniqueCode.js";
-import uploadProgram from "../middlewares/UploadProgram.js";
+import uploadProgram from "../middlewares/UploadAssignmentFile.js";
 
 const router = express.Router();
 
 router.get("/assignments/:class_code", index);
 router.get("/assignments/:class_code/:assignment_number", show);
 router.post(
-  "/assignments/",
+  "/assignments/:class_code",
   generateAssignmentNumber,
-  uploadProgram.single("program"),
+  uploadProgram.single("answer_key"),
   store
 );
 router.patch(
   "/assignments/:class_code/:assignment_number",
   generateAssignmentNumber,
-  uploadProgram.single("program"),
+  uploadProgram.single("answer_key"),
   update
 );
 router.delete("/assignments/:class_code/:assignment_number", destroy);

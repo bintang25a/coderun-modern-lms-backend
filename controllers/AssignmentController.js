@@ -68,32 +68,39 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { title, description, class_code, assistant_uid } = req.body;
+  const { assistant_uid, title, description, start_time, end_time } = req.body;
 
-  if ((!title, !description, !class_code, !assistant_uid)) {
+  if (!assistant_uid || !title || !description || !start_time || !end_time) {
     return res.status(400).json({
       success: false,
       message: "Create assignment failed, Field cannot empty",
     });
   }
 
-  const count = await Assignment.count({
-    where: {
-      class_code,
-    },
-  });
+  const startTime = new Date(start_time);
+  const endTime = new Date(end_time);
+
+  if (startTime > endTime) {
+    return res.status(400).json({
+      success: false,
+      message: "Create assignment failed, Time over deadline",
+    });
+  }
 
   const assignment_number = req.assignment_number;
+  const class_code = req.params.class_code;
   const answer_key = req.file ? req.file.filename : null;
 
   try {
     await Assignment.create({
       assignment_number,
-      title,
-      description,
       class_code,
       assistant_uid,
+      title,
+      description,
       answer_key,
+      start_time,
+      end_time,
     });
 
     res.status(201).json({
@@ -110,7 +117,7 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { title, description, class_code, assistant_uid } = req.body;
+  const { assistant_uid, title, description, start_time, end_time } = req.body;
 
   const assignment = await Assignment.findOne({
     where: {
@@ -125,7 +132,7 @@ export const update = async (req, res) => {
     });
   }
 
-  if ((!title, !description, !class_code, !assistant_uid)) {
+  if (!assistant_uid || !title || !description || !start_time || !end_time) {
     return res.status(400).json({
       success: false,
       message: "Update assignment failed, Field cannot empty",
@@ -133,31 +140,13 @@ export const update = async (req, res) => {
   }
 
   try {
-    let answer_key = assignment.answer_key;
-    if (req.file) {
-      answer_key = req.file.filename;
-
-      if (assignment.answer_key) {
-        const oldFilePath = path.join(
-          "src/classrooms",
-          class_code,
-          assignment.assignment_number,
-          assignment.answer_key
-        );
-
-        if (fs.existsSync(oldFilePath)) {
-          fs.unlinkSync(oldFilePath);
-        }
-      }
-    }
-
     await Assignment.update(
       {
+        assistant_uid,
         title,
         description,
-        class_code,
-        assistant_uid,
-        answer_key,
+        start_time,
+        end_time,
       },
       {
         where: {
@@ -194,17 +183,17 @@ export const destroy = async (req, res) => {
   }
 
   try {
-    if (assignment.answer_key) {
-      const oldFilePath = path.join(
-        "src/classrooms",
-        class_code,
-        assignment.assignment_number,
-        assignment.answer_key
-      );
-
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
-      }
+    const class_code = req.params.class_code;
+    const assignment_number = req.params.assignment_number;
+    const srcPath = path.resolve("src");
+    const assignmentPath = path.join(
+      srcPath,
+      "classrooms",
+      class_code,
+      assignment_number
+    );
+    if (fs.existsSync(assignmentPath)) {
+      fs.rmSync(assignmentPath, { recursive: true, force: true });
     }
 
     await Assignment.destroy({

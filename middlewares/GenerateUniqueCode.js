@@ -1,15 +1,42 @@
 import Assignment from "../models/AssignmentModel.js";
 
 export const generateAssignmentNumber = async (req, res, next) => {
-  const count = await Assignment.count();
-  let assignment_number = "";
+  try {
+    const { class_code, assignment_number: paramNumber } = req.params;
 
-  if (req.params.assignment_number) {
-    assignment_number = req.params.assignment_number;
-  } else {
-    assignment_number = `${class_code}-${String(count + 1).padStart(2, "0")}`;
+    if (paramNumber) {
+      req.assignment_number = paramNumber;
+      return next();
+    }
+
+    const lastAssignment = await Assignment.findOne({
+      where: { class_code },
+      order: [["createdAt", "DESC"]],
+    });
+
+    let nextNumber = 1;
+
+    if (lastAssignment) {
+      const lastNumberPart = parseInt(
+        lastAssignment.assignment_number.split("-").pop(),
+        10
+      );
+      nextNumber = lastNumberPart + 1;
+    }
+
+    const newAssignmentNumber = `${class_code}-${String(nextNumber).padStart(
+      2,
+      "0"
+    )}`;
+
+    req.assignment_number = newAssignmentNumber;
+    next();
+  } catch (error) {
+    console.error("Error generating assignment number:", error);
+    res.status(500).json({ message: "Failed to generate assignment number" });
   }
+};
 
-  req.assignment_number = assignment_number;
-  next();
+export const generateSubmissionNumber = async (req, res, next) => {
+  return null;
 };
