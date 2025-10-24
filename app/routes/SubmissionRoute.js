@@ -15,14 +15,14 @@ router.get("/submissions/:assignment_number", index);
 router.get("/submissions/:assignment_number/:submission_number", show);
 router.post(
   "/submissions/:assignment_number/:student_uid",
-  generateSubmissionNumber,
   uploadProgram.single("answer"),
+  generateSubmissionNumber,
   store
 );
 router.patch(
   "/submissions/:assignment_number/:submission_number",
-  generateSubmissionNumber,
   uploadProgram.single("answer"),
+  generateSubmissionNumber,
   update
 );
 router.delete("/submissions/:assignment_number/:submission_number", destroy);
