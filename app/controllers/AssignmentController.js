@@ -1,6 +1,5 @@
-import { Assignment } from "../models/index.js";
+import { Assignment } from "../../database/models/index.js";
 import fs from "fs";
-import path from "path";
 
 export const index = async (req, res) => {
   try {
@@ -183,15 +182,7 @@ export const destroy = async (req, res) => {
   }
 
   try {
-    const class_code = req.params.class_code;
-    const assignment_number = req.params.assignment_number;
-    const srcPath = path.resolve("src");
-    const assignmentPath = path.join(
-      srcPath,
-      "classrooms",
-      class_code,
-      assignment_number
-    );
+    const assignmentPath = assignment.answer_key;
     if (fs.existsSync(assignmentPath)) {
       fs.rmSync(assignmentPath, { recursive: true, force: true });
     }

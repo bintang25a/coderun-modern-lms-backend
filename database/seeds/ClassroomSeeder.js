@@ -1,4 +1,4 @@
-import Classroom from "../models/ClassroomModel.js";
+import Classroom from "../models/Classroom.js";
 
 export default async function ClassroomSeeder() {
   const classrooms = [

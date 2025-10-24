@@ -1,9 +1,9 @@
-import db from "../config/database.js";
-import User from "./UserModel.js";
-import Classroom from "./ClassroomModel.js";
-import UserClassroom from "./UserClassroomModel.js";
-import Assignment from "./AssignmentModel.js";
-import Submission from "./SubmissionModel.js";
+import db from "../../config/database.js";
+import User from "./User.js";
+import Classroom from "./Classroom.js";
+import UserClassroom from "./UserClassroom.js";
+import Assignment from "./Assignment.js";
+import Submission from "./Submission.js";
 
 User.belongsToMany(Classroom, {
   through: UserClassroom,

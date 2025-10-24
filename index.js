@@ -6,12 +6,13 @@ import { fileURLToPath } from "url";
 import path from "path";
 import dotenv from "dotenv";
 import SequelizeStore from "connect-session-sequelize";
-import UserRoute from "./routes/UserRoute.js";
-import ClassroomRoute from "./routes/ClassroomRoute.js";
-import UserClassroomRoute from "./routes/UserClassroomRoute.js";
-import AssignmentRoute from "./routes/AssignmentRoute.js";
-import AuthRoute from "./routes/AuthRoute.js";
-import { db } from "./models/index.js";
+import UserRoute from "./app/routes/UserRoute.js";
+import ClassroomRoute from "./app/routes/ClassroomRoute.js";
+import UserClassroomRoute from "./app/routes/UserClassroomRoute.js";
+import AssignmentRoute from "./app/routes/AssignmentRoute.js";
+import SubmissionRoute from "./app/routes/SubmissionRoute.js";
+import AuthRoute from "./app/routes/AuthRoute.js";
+import { db } from "./database/models/index.js";
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ app.use(UserRoute);
 app.use(ClassroomRoute);
 app.use(UserClassroomRoute);
 app.use(AssignmentRoute);
+app.use(SubmissionRoute);
 app.use(AuthRoute);
 
 app.use("/users/photo", express.static(path.join(__dirname, "src/profiles")));
@@ -70,28 +72,5 @@ const classroomPath = "./src/classrooms";
 if (!fs.existsSync(classroomPath)) {
   fs.mkdirSync(classroomPath);
 }
-
-// (async () => {
-//   try {
-//     await db.query("SET FOREIGN_KEY_CHECKS = 0");
-//     await db.sync({ force: true });
-
-//     console.log("Database synced (tables created)");
-
-//     const { default: UserSeeder } = await import("./seed/UserSeeder.js");
-//     const { default: ClassroomSeeder } = await import(
-//       "./seed/ClassroomSeeder.js"
-//     );
-//     const { default: UserClassroomSeeder } = await import(
-//       "./seed/UserClassroomSeeder.js"
-//     );
-
-//     await UserSeeder();
-//     await ClassroomSeeder();
-//     await UserClassroomSeeder();
-//   } catch (err) {
-//     console.error("Gagal sync:", err);
-//   }
-// })();
 
 app.listen(port, () => console.log(`Server run on http://localhost:${port}`));

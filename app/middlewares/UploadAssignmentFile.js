@@ -2,22 +2,32 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-const srcPath = path.resolve("src");
+const publicPath = path.resolve("public");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    // const reqBody = { ...req.body };
+
     try {
-      const class_code = req.params.class_code;
+      const class_code = req.params.class_code
+        ? req.params.class_code
+        : req.body.class_code;
+
+      console.log(publicPath);
 
       if (!class_code) {
         return cb(new Error("Class code unidentified"));
       }
 
+      const codeNumber = req.assignment_number
+        ? req.assignment_number
+        : req.params.assignment_number;
+
       const classFolder = path.join(
-        srcPath,
+        publicPath,
         "classrooms",
         class_code,
-        req.assignment_number
+        codeNumber
       );
 
       if (!fs.existsSync(classFolder)) {
@@ -31,8 +41,8 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    const { assistant_uid, uid } = req.body;
-    const identifier = assistant_uid ? "answer_key" : uid || undefined;
+    const { assistant_uid, student_uid } = req.body;
+    const identifier = assistant_uid ? "answer_key" : student_uid || undefined;
     const fileName = `${identifier}${path.extname(file.originalname)}`;
 
     cb(null, fileName);

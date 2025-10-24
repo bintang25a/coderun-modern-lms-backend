@@ -1,4 +1,4 @@
-import UserClassroom from "../models/UserClassroomModel.js";
+import UserClassroom from "../models/UserClassroom.js";
 
 export default async function UserClassroomSeeder() {
   const classrooms = [

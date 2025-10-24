@@ -1,4 +1,4 @@
-import { User } from "../models/index.js";
+import { User } from "../../database/models/index.js";
 import bcrypt from "bcrypt";
 import fs from "fs";
 import path from "path";
@@ -167,7 +167,7 @@ export const update = async (req, res) => {
       photo = req.file.filename;
 
       if (user.photo) {
-        const oldFilePath = path.join("src/profiles", user.photo);
+        const oldFilePath = path.join("public/profiles", user.photo);
 
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath);
@@ -221,7 +221,7 @@ export const destroy = async (req, res) => {
 
   try {
     if (user.photo) {
-      const oldFilePath = path.join("src/profiles", user.photo);
+      const oldFilePath = path.join("public/profiles", user.photo);
 
       if (fs.existsSync(oldFilePath)) {
         fs.unlinkSync(oldFilePath);

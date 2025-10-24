@@ -1,4 +1,4 @@
-import { UserClassroom, User, Classroom } from "../models/index.js";
+import { UserClassroom, User, Classroom } from "../../database/models/index.js";
 
 export const index = async (req, res) => {
   try {

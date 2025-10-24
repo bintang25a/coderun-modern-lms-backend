@@ -12,7 +12,7 @@ const Submission = db.define("submissions", {
     allowNull: false,
     references: {
       model: "assignments",
-      key: "assignments_number",
+      key: "assignment_number",
     },
   },
   student_uid: {

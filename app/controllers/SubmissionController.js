@@ -1,6 +1,5 @@
-import { Submission } from "../models/index.js";
+import { Submission } from "../../database/models/index.js";
 import fs from "fs";
-import path from "path";
 import path from "path";
 
 export const index = async (req, res) => {
@@ -69,23 +68,24 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { student_uid } = req.body;
+  const { student_uid, class_code } = req.body;
 
-  if (!student_uid) {
+  if (!student_uid || !class_code || !req.file) {
     return res.status(400).json({
       success: false,
-      message: "Create submission failed, Student UID unidentified",
+      message: "Create submission failed, Field must not empty",
     });
   }
 
-  const { assignment_number, class_code } = req.params;
+  const { assignment_number } = req.params;
   const answerPath = path.join(
-    "src/classrooms",
+    "public/classrooms",
     class_code,
     assignment_number,
     req.file.filename
   );
-  const answer = req.file ? answerPath : null;
+
+  const answer = answerPath;
 
   try {
     await Submission.create({
@@ -109,7 +109,7 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { student_uid } = req.body;
+  const { student_uid, class_code } = req.body;
 
   const submission = await Submission.findOne({
     where: {
@@ -124,10 +124,10 @@ export const update = async (req, res) => {
     });
   }
 
-  if (!student_uid) {
+  if (!student_uid || !class_code) {
     return res.status(400).json({
       success: false,
-      message: "Update submission failed, Student UID unidentified",
+      message: "Update submission failed, Field must not empty",
     });
   }
 
@@ -139,9 +139,11 @@ export const update = async (req, res) => {
         fs.unlinkSync(answer);
       }
 
-      const { assignment_number, class_code } = req.params;
+      const { assignment_number } = req.params;
+      const publicPath = path.resolve("public");
       answer = path.join(
-        "src/classrooms",
+        publicPath,
+        "classrooms",
         class_code,
         assignment_number,
         req.file.filename

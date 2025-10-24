@@ -2,8 +2,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-const srcPath = path.resolve("src");
-const folderPath = path.join(srcPath, "profiles");
+const publicPath = path.resolve("public");
+const folderPath = path.join(publicPath, "profiles");
 if (!fs.existsSync(folderPath)) {
   fs.mkdirSync(folderPath, { recursive: true });
 }

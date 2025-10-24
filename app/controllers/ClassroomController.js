@@ -1,4 +1,4 @@
-import { Classroom } from "../models/index.js";
+import { Classroom } from "../../database/models/index.js";
 import fs from "fs";
 import path from "path";
 
@@ -124,8 +124,8 @@ export const store = async (req, res) => {
   }
 
   try {
-    const srcPath = path.resolve("src");
-    const classroomPath = path.join(srcPath, "classrooms", class_code);
+    const publicPath = path.resolve("public");
+    const classroomPath = path.join(publicPath, "classrooms", class_code);
     if (!fs.existsSync(classroomPath)) {
       fs.mkdirSync(classroomPath, { recursive: true });
     }
@@ -215,9 +215,9 @@ export const destroy = async (req, res) => {
   }
 
   try {
-    const srcPath = path.resolve("src");
+    const publicPath = path.resolve("public");
     const classroomPath = path.join(
-      srcPath,
+      publicPath,
       "classrooms",
       classroom.class_code
     );
