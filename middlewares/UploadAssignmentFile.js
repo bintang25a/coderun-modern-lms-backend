@@ -2,7 +2,6 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Tentukan folder utama penyimpanan
 const srcPath = path.resolve("src");
 
 const storage = multer.diskStorage({

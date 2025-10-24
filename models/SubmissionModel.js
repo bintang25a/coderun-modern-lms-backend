@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import { db } from "./index.js";
 
-const Assignment = db.define("submissions", {
+const Submission = db.define("submissions", {
   submission_number: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -29,4 +29,4 @@ const Assignment = db.define("submissions", {
   },
 });
 
-export default Assignment;
+export default Submission;

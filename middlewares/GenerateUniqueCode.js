@@ -38,5 +38,14 @@ export const generateAssignmentNumber = async (req, res, next) => {
 };
 
 export const generateSubmissionNumber = async (req, res, next) => {
-  return null;
+  try {
+    const dateNumber = new Date().toISOString().replace(/[-:.TZ]/g, "");
+    const idNumber = req.body.student_uid;
+
+    req.submission_number = `${idNumber}-${dateNumber}`;
+    next();
+  } catch (error) {
+    console.error("Error generating submission number:", error);
+    res.status(500).json({ message: "Failed to generate submission number" });
+  }
 };

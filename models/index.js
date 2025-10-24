@@ -3,6 +3,7 @@ import User from "./UserModel.js";
 import Classroom from "./ClassroomModel.js";
 import UserClassroom from "./UserClassroomModel.js";
 import Assignment from "./AssignmentModel.js";
+import Submission from "./SubmissionModel.js";
 
 User.belongsToMany(Classroom, {
   through: UserClassroom,
@@ -50,4 +51,4 @@ Assignment.belongsTo(Classroom, {
   as: "classroom",
 });
 
-export { db, User, Classroom, UserClassroom, Assignment };
+export { db, User, Classroom, UserClassroom, Assignment, Submission };
