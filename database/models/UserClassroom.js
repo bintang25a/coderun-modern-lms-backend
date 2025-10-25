@@ -9,8 +9,6 @@ const UserClassroom = db.define("user_classroom", {
       model: "users",
       key: "uid",
     },
-    onDelete: "CASCADE",
-    onUpdate: "CASCADE",
   },
   class_code: {
     type: DataTypes.STRING(32),
@@ -19,8 +17,6 @@ const UserClassroom = db.define("user_classroom", {
       model: "classrooms",
       key: "class_code",
     },
-    onDelete: "CASCADE",
-    onUpdate: "CASCADE",
   },
 });
 

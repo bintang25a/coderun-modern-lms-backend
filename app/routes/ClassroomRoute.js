@@ -6,13 +6,14 @@ import {
   update,
   destroy,
 } from "../controllers/ClassroomController.js";
+import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 
 const router = express.Router();
 
-router.get("/classrooms", index);
-router.get("/classrooms/:class_code", show);
-router.post("/classrooms/", store);
-router.patch("/classrooms/:class_code", update);
-router.delete("/classrooms/:class_code", destroy);
+router.get("/classrooms", verifyUser, index);
+router.get("/classrooms/:class_code", verifyUser, show);
+router.post("/classrooms/", verifyUser, assistantOnly, store);
+router.patch("/classrooms/:class_code", verifyUser, assistantOnly, update);
+router.delete("/classrooms/:class_code", verifyUser, assistantOnly, destroy);
 
 export default router;

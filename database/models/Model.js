@@ -4,6 +4,7 @@ import Classroom from "./Classroom.js";
 import UserClassroom from "./UserClassroom.js";
 import Assignment from "./Assignment.js";
 import Submission from "./Submission.js";
+import { DataTypes } from "sequelize";
 
 User.belongsToMany(Classroom, {
   through: UserClassroom,
@@ -50,5 +51,47 @@ Assignment.belongsTo(Classroom, {
   sourceKey: "class_code",
   as: "classroom",
 });
+Assignment.hasMany(Submission, {
+  foreignKey: "assignment_number",
+  sourceKey: "assignment_number",
+  as: "submission",
+});
 
-export { db, User, Classroom, UserClassroom, Assignment, Submission };
+Submission.belongsTo(User, {
+  foreignKey: "student_uid",
+  sourceKey: "uid",
+  as: "student",
+});
+
+const Setting = db.define("settings", {
+  key: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  value: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+});
+
+const Token = db.define("tokens", {
+  token: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  expiredAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+});
+
+export {
+  db,
+  User,
+  Classroom,
+  UserClassroom,
+  Assignment,
+  Submission,
+  Token,
+  Setting,
+};

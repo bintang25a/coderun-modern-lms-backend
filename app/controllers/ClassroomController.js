@@ -27,7 +27,13 @@ export const index = async (req, res) => {
         {
           association: Classroom.associations.assignments,
           as: "assignments",
-          attributes: ["assignment_number", "title", "description"],
+          attributes: [
+            "assignment_number",
+            "title",
+            "description",
+            "startAt",
+            "endAt",
+          ],
         },
       ],
     });
@@ -74,7 +80,13 @@ export const show = async (req, res) => {
         {
           association: Classroom.associations.assignments,
           as: "assignments",
-          attributes: ["assignment_number", "title", "description"],
+          attributes: [
+            "assignment_number",
+            "title",
+            "description",
+            "startAt",
+            "endAt",
+          ],
         },
       ],
     });
@@ -124,12 +136,6 @@ export const store = async (req, res) => {
   }
 
   try {
-    const publicPath = path.resolve("public");
-    const classroomPath = path.join(publicPath, "classrooms", class_code);
-    if (!fs.existsSync(classroomPath)) {
-      fs.mkdirSync(classroomPath, { recursive: true });
-    }
-
     await Classroom.create({
       class_code,
       name,

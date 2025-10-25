@@ -35,11 +35,15 @@ const Assignment = db.define("assignments", {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  start_time: {
+  overtime: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+  },
+  startAt: {
     type: DataTypes.DATE,
     allowNull: false,
   },
-  end_time: {
+  endAt: {
     type: DataTypes.DATE,
     allowNull: false,
   },

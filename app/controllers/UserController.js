@@ -13,7 +13,7 @@ export const index = async (req, res) => {
         {
           association: User.associations.classroom,
           as: "classroom",
-          attributes: ["name"],
+          attributes: ["class_code", "name"],
           through: {
             attributes: [],
           },
@@ -48,7 +48,7 @@ export const show = async (req, res) => {
         {
           association: User.associations.classroom,
           as: "classroom",
-          attributes: ["name"],
+          attributes: ["class_code", "name"],
           through: {
             attributes: [],
           },

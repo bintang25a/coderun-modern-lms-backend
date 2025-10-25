@@ -29,6 +29,10 @@ const Submission = db.define("submissions", {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  grade: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
 });
 
 export default Submission;

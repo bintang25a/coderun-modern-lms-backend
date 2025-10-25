@@ -14,6 +14,11 @@ export const index = async (req, res) => {
           as: "classroom",
           attributes: ["name"],
         },
+        {
+          association: Assignment.associations.submission,
+          as: "submission",
+          attributes: ["student_uid"],
+        },
       ],
     });
 
@@ -43,6 +48,11 @@ export const show = async (req, res) => {
           as: "classroom",
           attributes: ["name"],
         },
+        {
+          association: Assignment.associations.submission,
+          as: "submission",
+          attributes: ["student_uid"],
+        },
       ],
     });
 
@@ -68,17 +78,25 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { assistant_uid, title, description, start_time, end_time } = req.body;
+  const { assistant_uid, title, description, startAt, endAt, overtime } =
+    req.body;
 
-  if (!assistant_uid || !title || !description || !start_time || !end_time) {
+  if (
+    !assistant_uid ||
+    !title ||
+    !description ||
+    !startAt ||
+    !endAt ||
+    !overtime
+  ) {
     return res.status(400).json({
       success: false,
       message: "Create assignment failed, Field cannot empty",
     });
   }
 
-  const startTime = new Date(start_time);
-  const endTime = new Date(end_time);
+  const startTime = new Date(startAt);
+  const endTime = new Date(endAt);
 
   if (startTime > endTime) {
     return res.status(400).json({
@@ -110,8 +128,9 @@ export const store = async (req, res) => {
       title,
       description,
       answer_key,
-      start_time,
-      end_time,
+      startAt,
+      endAt,
+      overtime,
     });
 
     res.status(201).json({
@@ -128,7 +147,8 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { assistant_uid, title, description, start_time, end_time } = req.body;
+  const { assistant_uid, title, description, startAt, endAt, overtime } =
+    req.body;
 
   const assignment = await Assignment.findOne({
     where: {
@@ -143,7 +163,14 @@ export const update = async (req, res) => {
     });
   }
 
-  if (!assistant_uid || !title || !description || !start_time || !end_time) {
+  if (
+    !assistant_uid ||
+    !title ||
+    !description ||
+    !startAt ||
+    !endAt ||
+    !overtime
+  ) {
     return res.status(400).json({
       success: false,
       message: "Update assignment failed, Field cannot empty",
@@ -156,8 +183,9 @@ export const update = async (req, res) => {
         assistant_uid,
         title,
         description,
-        start_time,
-        end_time,
+        startAt,
+        endAt,
+        overtime,
       },
       {
         where: {
