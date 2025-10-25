@@ -1,5 +1,6 @@
-import { Assignment } from "../../database/models/index.js";
+import { Assignment } from "../../database/models/Model.js";
 import fs from "fs";
+import path from "path";
 
 export const index = async (req, res) => {
   try {
@@ -88,7 +89,18 @@ export const store = async (req, res) => {
 
   const assignment_number = req.assignment_number;
   const class_code = req.params.class_code;
-  const answer_key = req.file ? req.file.filename : null;
+
+  let answer_key = null;
+
+  if (req.file) {
+    const answerPath = path.join(
+      "public/classrooms",
+      assignment_number,
+      req.file.filename
+    );
+
+    answer_key = answerPath;
+  }
 
   try {
     await Assignment.create({
@@ -182,7 +194,10 @@ export const destroy = async (req, res) => {
   }
 
   try {
-    const assignmentPath = assignment.answer_key;
+    const assignmentPath = path.join(
+      "public/classrooms",
+      req.params.assignment_number
+    );
     if (fs.existsSync(assignmentPath)) {
       fs.rmSync(assignmentPath, { recursive: true, force: true });
     }

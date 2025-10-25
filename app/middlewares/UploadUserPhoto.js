@@ -1,12 +1,8 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 
 const publicPath = path.resolve("public");
 const folderPath = path.join(publicPath, "profiles");
-if (!fs.existsSync(folderPath)) {
-  fs.mkdirSync(folderPath, { recursive: true });
-}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

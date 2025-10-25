@@ -1,4 +1,4 @@
-import { Submission } from "../../database/models/index.js";
+import { Submission } from "../../database/models/Model.js";
 import fs from "fs";
 import path from "path";
 
@@ -68,24 +68,36 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { student_uid, class_code } = req.body;
+  const { student_uid } = req.body;
 
-  if (!student_uid || !class_code || !req.file) {
+  if (!student_uid) {
     return res.status(400).json({
       success: false,
-      message: "Create submission failed, Field must not empty",
+      message: "Create submission failed, Student UID unidentified",
     });
   }
 
   const { assignment_number } = req.params;
   const answerPath = path.join(
     "public/classrooms",
-    class_code,
     assignment_number,
     req.file.filename
   );
 
   const answer = answerPath;
+
+  const submission = await Submission.findOne({
+    where: {
+      answer,
+    },
+  });
+
+  if (submission) {
+    return res.status(400).json({
+      success: false,
+      message: "Create submission failed, This user already submit",
+    });
+  }
 
   try {
     await Submission.create({
@@ -109,8 +121,6 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { student_uid, class_code } = req.body;
-
   const submission = await Submission.findOne({
     where: {
       submission_number: req.params.submission_number,
@@ -124,27 +134,13 @@ export const update = async (req, res) => {
     });
   }
 
-  if (!student_uid || !class_code) {
-    return res.status(400).json({
-      success: false,
-      message: "Update submission failed, Field must not empty",
-    });
-  }
-
   try {
     let answer = submission.answer;
 
     if (req.file) {
-      if (fs.existsSync(answer)) {
-        fs.unlinkSync(answer);
-      }
-
       const { assignment_number } = req.params;
-      const publicPath = path.resolve("public");
       answer = path.join(
-        publicPath,
-        "classrooms",
-        class_code,
+        "public/classrooms",
         assignment_number,
         req.file.filename
       );
@@ -152,7 +148,6 @@ export const update = async (req, res) => {
 
     await Submission.update(
       {
-        student_uid,
         answer,
       },
       {

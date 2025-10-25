@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import { db } from "./index.js";
+import { db } from "./Model.js";
 
 const Submission = db.define("submissions", {
   submission_number: {
@@ -14,6 +14,8 @@ const Submission = db.define("submissions", {
       model: "assignments",
       key: "assignment_number",
     },
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
   },
   student_uid: {
     type: DataTypes.STRING(16),

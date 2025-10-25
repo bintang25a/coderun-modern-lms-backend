@@ -1,4 +1,4 @@
-import Classroom from "../models/Classroom.js";
+import { Classroom } from "../models/Model.js";
 
 export default async function ClassroomSeeder() {
   const classrooms = [
@@ -17,5 +17,5 @@ export default async function ClassroomSeeder() {
   ];
 
   await Classroom.bulkCreate(classrooms);
-  console.log("✅ 3 Data dummy berhasil dimasukkan ke tabel Classroom");
+  console.log("Classroom seeding successfully");
 }

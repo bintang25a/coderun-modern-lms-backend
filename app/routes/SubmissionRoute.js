@@ -14,7 +14,7 @@ const router = express.Router();
 router.get("/submissions/:assignment_number", index);
 router.get("/submissions/:assignment_number/:submission_number", show);
 router.post(
-  "/submissions/:assignment_number/:student_uid",
+  "/submissions/:assignment_number",
   uploadProgram.single("answer"),
   generateSubmissionNumber,
   store
@@ -22,7 +22,6 @@ router.post(
 router.patch(
   "/submissions/:assignment_number/:submission_number",
   uploadProgram.single("answer"),
-  generateSubmissionNumber,
   update
 );
 router.delete("/submissions/:assignment_number/:submission_number", destroy);

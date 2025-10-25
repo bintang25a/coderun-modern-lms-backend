@@ -1,4 +1,4 @@
-import { Classroom } from "../../database/models/index.js";
+import { Classroom } from "../../database/models/Model.js";
 import fs from "fs";
 import path from "path";
 
@@ -112,7 +112,7 @@ export const store = async (req, res) => {
 
   const classroom = await Classroom.findOne({
     where: {
-      class_code: class_code,
+      class_code,
     },
   });
 

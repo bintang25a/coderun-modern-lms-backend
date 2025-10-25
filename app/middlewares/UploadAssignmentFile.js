@@ -1,34 +1,30 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-
-const publicPath = path.resolve("public");
+import { Assignment } from "../../database/models/Model.js";
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // const reqBody = { ...req.body };
-
+  destination: async (req, file, cb) => {
     try {
-      const class_code = req.params.class_code
-        ? req.params.class_code
-        : req.body.class_code;
+      const publicPath = path.resolve("public");
 
-      console.log(publicPath);
+      let codeNumber = req.assignment_number;
 
-      if (!class_code) {
-        return cb(new Error("Class code unidentified"));
+      if (!req.assignment_number && req.params.assignment_number) {
+        const assignment = await Assignment.findOne({
+          where: {
+            assignment_number: req.params.assignment_number,
+          },
+        });
+
+        if (!assignment) {
+          cb(new Error("Assignment not found"));
+        }
+
+        codeNumber = req.params.assignment_number;
       }
 
-      const codeNumber = req.assignment_number
-        ? req.assignment_number
-        : req.params.assignment_number;
-
-      const classFolder = path.join(
-        publicPath,
-        "classrooms",
-        class_code,
-        codeNumber
-      );
+      const classFolder = path.join(publicPath, "classrooms", codeNumber);
 
       if (!fs.existsSync(classFolder)) {
         fs.mkdirSync(classFolder, { recursive: true });
@@ -49,7 +45,6 @@ const storage = multer.diskStorage({
   },
 });
 
-// Filter ekstensi file
 const fileFilter = (req, file, cb) => {
   const allowedExtensions = /\.(?:c|cpp|java|py|zip|rar|pdf)$/i;
   const ext = path.extname(file.originalname).toLowerCase();
@@ -61,11 +56,10 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Batas ukuran maksimal 5 MB
 const uploadProgram = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 export default uploadProgram;

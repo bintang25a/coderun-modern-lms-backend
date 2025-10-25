@@ -12,7 +12,7 @@ import UserClassroomRoute from "./app/routes/UserClassroomRoute.js";
 import AssignmentRoute from "./app/routes/AssignmentRoute.js";
 import SubmissionRoute from "./app/routes/SubmissionRoute.js";
 import AuthRoute from "./app/routes/AuthRoute.js";
-import { db } from "./database/models/index.js";
+import { db } from "./database/models/Model.js";
 
 dotenv.config();
 
@@ -61,16 +61,19 @@ app.use(AssignmentRoute);
 app.use(SubmissionRoute);
 app.use(AuthRoute);
 
-app.use("/users/photo", express.static(path.join(__dirname, "src/profiles")));
+app.use(
+  "/users/photo",
+  express.static(path.join(__dirname, "public/profiles"))
+);
 
-const srcPath = path.resolve("src");
-if (!fs.existsSync(srcPath)) {
-  fs.mkdirSync(srcPath);
+const classroomPath = "./public/classrooms";
+if (!fs.existsSync(classroomPath)) {
+  fs.mkdirSync(classroomPath, { recursive: true });
 }
 
-const classroomPath = "./src/classrooms";
-if (!fs.existsSync(classroomPath)) {
-  fs.mkdirSync(classroomPath);
+const profilesPath = "./public/profiles";
+if (!fs.existsSync(profilesPath)) {
+  fs.mkdirSync(profilesPath, { recursive: true });
 }
 
 app.listen(port, () => console.log(`Server run on http://localhost:${port}`));

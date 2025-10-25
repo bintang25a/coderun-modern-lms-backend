@@ -1,10 +1,9 @@
-import User from "../models/User.js";
+import { User } from "../models/Model.js";
 import bcrypt from "bcrypt";
 
 export default async function UserSeeder() {
   const saltRounds = 10;
 
-  // Fungsi bantu untuk hash password
   const hash = async (plain) => await bcrypt.hash(plain, saltRounds);
 
   const users = [
@@ -155,11 +154,10 @@ export default async function UserSeeder() {
     },
   ];
 
-  // Hash password untuk semua user
   for (const user of users) {
     user.password = await hash("password123");
   }
 
   await User.bulkCreate(users);
-  console.log("✅ 20 Data dummy berhasil dimasukkan ke tabel Users");
+  console.log("User seeding successfully");
 }

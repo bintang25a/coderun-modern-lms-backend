@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import { db } from "./index.js";
+import { db } from "./Model.js";
 
 const Assignment = db.define("assignments", {
   assignment_number: {

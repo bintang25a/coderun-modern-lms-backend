@@ -1,4 +1,4 @@
-import { User } from "../../database/models/index.js";
+import { User } from "../../database/models/Model.js";
 import bcrypt from "bcrypt";
 import fs from "fs";
 import path from "path";
@@ -85,6 +85,19 @@ export const store = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: "Create user failed, Field cannot empty",
+    });
+  }
+
+  const user = await User.findOne({
+    where: {
+      uid,
+    },
+  });
+
+  if (user) {
+    return res.status(400).json({
+      success: false,
+      message: "Create user failed, User already exist",
     });
   }
 

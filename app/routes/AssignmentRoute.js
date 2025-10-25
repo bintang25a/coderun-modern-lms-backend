@@ -21,7 +21,6 @@ router.post(
 );
 router.patch(
   "/assignments/:class_code/:assignment_number",
-  generateAssignmentNumber,
   uploadProgram.single("answer_key"),
   update
 );
