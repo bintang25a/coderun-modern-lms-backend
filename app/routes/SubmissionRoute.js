@@ -7,41 +7,18 @@ import {
   update,
   destroy,
 } from "../controllers/SubmissionController.js";
-import { generateSubmissionNumber } from "../middlewares/GenerateUniqueCode.js";
+import { generateSubmissionNumber as GSN } from "../middlewares/GenerateUniqueCode.js";
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
-import uploadProgram from "../middlewares/UploadAssignmentFile.js";
+import uploadAnswer from "../middlewares/UploadAssignmentFile.js";
 
 const router = express.Router();
 
-router.get("/submissions/:assignment_number", verifyUser, index);
-router.get(
-  "/submissions/:assignment_number/:submission_number",
-  verifyUser,
-  show
-);
-router.post(
-  "/submissions/:assignment_number",
-  verifyUser,
-  uploadProgram.single("answer"),
-  generateSubmissionNumber,
-  store
-);
-router.patch(
-  "/submissions/grade/:submission_number",
-  verifyUser,
-  assistantOnly,
-  grade
-);
-router.patch(
-  "/submissions/:assignment_number/:submission_number",
-  verifyUser,
-  uploadProgram.single("answer"),
-  update
-);
-router.delete(
-  "/submissions/:assignment_number/:submission_number",
-  verifyUser,
-  destroy
-);
+router.use(verifyUser);
+router.get("/", index);
+router.get("/:submission_number", show);
+router.post("/", uploadAnswer.single("answer"), GSN, store);
+router.patch("/:submission_number/grade", assistantOnly, grade);
+router.patch("/:submission_number", uploadAnswer.single("answer"), update);
+router.delete("/:submission_number", destroy);
 
 export default router;

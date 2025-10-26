@@ -12,7 +12,7 @@ export const index = async (req, res) => {
         {
           association: Submission.associations.student,
           as: "student",
-          attributes: ["name"],
+          attributes: ["uid", "name", "email"],
         },
       ],
     });
@@ -41,7 +41,7 @@ export const show = async (req, res) => {
         {
           association: Submission.associations.student,
           as: "student",
-          attributes: ["name"],
+          attributes: ["uid", "name", "email"],
         },
       ],
     });
@@ -81,7 +81,7 @@ export const store = async (req, res) => {
 
   const { assignment_number } = req.params;
   const answerPath = path.join(
-    "public/classrooms",
+    "public/classrooms/assignments",
     assignment_number,
     req.file.filename
   );
@@ -136,12 +136,12 @@ export const grade = async (req, res) => {
     });
   }
 
-  const { grade } = req.body;
+  const { grade, assistant_uid } = req.body;
 
-  if (!grade) {
+  if (!grade || !assistant_uid) {
     return res.status(400).json({
       success: false,
-      message: "Grading submission failed, Grade cannot empty",
+      message: "Grading submission failed, Field cannot empty",
     });
   }
 
@@ -149,6 +149,7 @@ export const grade = async (req, res) => {
     await Submission.update(
       {
         grade,
+        assistant_uid,
       },
       {
         where: {
@@ -190,7 +191,7 @@ export const update = async (req, res) => {
     if (req.file) {
       const { assignment_number } = req.params;
       answer = path.join(
-        "public/classrooms",
+        "public/classrooms/assignments",
         assignment_number,
         req.file.filename
       );

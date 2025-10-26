@@ -24,7 +24,11 @@ const storage = multer.diskStorage({
         codeNumber = req.params.assignment_number;
       }
 
-      const classFolder = path.join(publicPath, "classrooms", codeNumber);
+      const classFolder = path.join(
+        publicPath,
+        "classrooms/assignments",
+        codeNumber
+      );
 
       if (!fs.existsSync(classFolder)) {
         fs.mkdirSync(classFolder, { recursive: true });
@@ -56,10 +60,10 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const uploadProgram = multer({
+const upload = multer({
   storage,
   fileFilter,
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-export default uploadProgram;
+export default upload;

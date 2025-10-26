@@ -1,6 +1,6 @@
-import { UserClassroom } from "../models/Model.js";
+import { StudentClassroom } from "../models/Model.js";
 
-export default async function UserClassroomSeeder() {
+export default async function StudentClassroomSeeder() {
   const classrooms = [
     {
       class_code: "IF23A1",
@@ -52,6 +52,6 @@ export default async function UserClassroomSeeder() {
     },
   ];
 
-  await UserClassroom.bulkCreate(classrooms);
+  await StudentClassroom.bulkCreate(classrooms);
   console.log("User Classroom seeding successfully");
 }

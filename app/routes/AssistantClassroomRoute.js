@@ -1,21 +1,18 @@
 import express from "express";
 import {
   index,
-  show,
   store,
   update,
   destroy,
-} from "../controllers/ClassroomController.js";
+} from "../controllers/AssistantClassroom.js";
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 
 const router = express.Router();
 
 router.use(verifyUser);
 router.get("/", index);
-router.get("/:class_code", show);
-router.use(assistantOnly);
 router.post("/", store);
-router.patch("/:class_code", update);
-router.delete("/:class_code", destroy);
+router.patch("/:class_code/:uid", assistantOnly, update);
+router.delete("/:class_code/:uid", assistantOnly, destroy);
 
 export default router;

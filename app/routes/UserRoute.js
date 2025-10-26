@@ -11,16 +11,11 @@ import uploadPhoto from "../middlewares/UploadUserPhoto.js";
 
 const router = express.Router();
 
-router.get("/users", verifyUser, index);
-router.get("/users/:uid", verifyUser, show);
-router.post(
-  "/users/",
-  verifyUser,
-  adminOnly,
-  uploadPhoto.single("photo"),
-  store
-);
-router.patch("/users/:uid", verifyUser, uploadPhoto.single("photo"), update);
-router.delete("/users/:uid", verifyUser, adminOnly, destroy);
+router.use(verifyUser);
+router.get("/", index);
+router.get("/:uid", show);
+router.post("/", adminOnly, uploadPhoto.single("photo"), store);
+router.patch("/:uid", uploadPhoto.single("photo"), update);
+router.delete("/:uid", adminOnly, destroy);
 
 export default router;

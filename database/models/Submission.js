@@ -17,6 +17,15 @@ const Submission = db.define("submissions", {
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
   },
+  assistant_uid: {
+    type: DataTypes.STRING(16),
+    allowNull: true,
+    references: {
+      model: "users",
+      key: "uid",
+    },
+    onUpdate: "CASCADE",
+  },
   student_uid: {
     type: DataTypes.STRING(16),
     allowNull: false,
@@ -24,6 +33,8 @@ const Submission = db.define("submissions", {
       model: "users",
       key: "uid",
     },
+    onUpdate: "CASCADE",
+    onDelete: "CASCADE",
   },
   answer: {
     type: DataTypes.TEXT,

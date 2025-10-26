@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import { db } from "./Model.js";
 
-const UserClassroom = db.define("user_classroom", {
+const StudentClassroom = db.define("student_classroom", {
   uid: {
     type: DataTypes.STRING(16),
     allowNull: false,
@@ -9,6 +9,8 @@ const UserClassroom = db.define("user_classroom", {
       model: "users",
       key: "uid",
     },
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
   },
   class_code: {
     type: DataTypes.STRING(32),
@@ -17,7 +19,9 @@ const UserClassroom = db.define("user_classroom", {
       model: "classrooms",
       key: "class_code",
     },
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
   },
 });
 
-export default UserClassroom;
+export default StudentClassroom;

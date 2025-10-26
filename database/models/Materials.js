@@ -1,9 +1,9 @@
 import { DataTypes } from "sequelize";
 import { db } from "./Model.js";
 
-const Assignment = db.define("assignments", {
-  assignment_number: {
-    type: DataTypes.STRING(36),
+const Material = db.define("materials", {
+  material_number: {
+    type: DataTypes.STRING(64),
     allowNull: false,
     primaryKey: true,
   },
@@ -30,26 +30,10 @@ const Assignment = db.define("assignments", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  description: {
+  material: {
     type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  answer_key: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-  overtime: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-  },
-  startAt: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  endAt: {
-    type: DataTypes.DATE,
     allowNull: false,
   },
 });
 
-export default Assignment;
+export default Material;

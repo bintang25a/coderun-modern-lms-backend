@@ -11,8 +11,16 @@ export const index = async (req, res) => {
       },
       include: [
         {
-          association: User.associations.classroom,
-          as: "classroom",
+          association: User.associations.classrooms,
+          as: "classrooms",
+          attributes: ["class_code", "name"],
+          through: {
+            attributes: [],
+          },
+        },
+        {
+          association: User.associations.assists,
+          as: "assists",
           attributes: ["class_code", "name"],
           through: {
             attributes: [],
@@ -48,6 +56,14 @@ export const show = async (req, res) => {
         {
           association: User.associations.classroom,
           as: "classroom",
+          attributes: ["class_code", "name"],
+          through: {
+            attributes: [],
+          },
+        },
+        {
+          association: User.associations.assists,
+          as: "assists",
           attributes: ["class_code", "name"],
           through: {
             attributes: [],

@@ -1,48 +1,70 @@
 import db from "../../config/database.js";
 import User from "./User.js";
 import Classroom from "./Classroom.js";
-import UserClassroom from "./UserClassroom.js";
+import AssistantClassroom from "./AssistantClassroom.js";
+import StudentClassroom from "./StudentClassroom.js";
+import Material from "./Materials.js";
 import Assignment from "./Assignment.js";
 import Submission from "./Submission.js";
 import { DataTypes } from "sequelize";
 
 User.belongsToMany(Classroom, {
-  through: UserClassroom,
+  through: StudentClassroom,
   foreignKey: "uid",
   otherKey: "class_code",
-  as: "classroom",
+  as: "classrooms",
+});
+User.belongsToMany(Classroom, {
+  through: AssistantClassroom,
+  foreignKey: "uid",
+  otherKey: "class_code",
+  as: "assists",
 });
 
 Classroom.belongsToMany(User, {
-  through: UserClassroom,
+  through: StudentClassroom,
   foreignKey: "class_code",
   otherKey: "uid",
-  as: "praktikan",
+  as: "students",
 });
-Classroom.belongsTo(User, {
-  foreignKey: "assistant1_uid",
-  sourceKey: "uid",
-  as: "tutor",
-  constraints: false,
-});
-Classroom.belongsTo(User, {
-  foreignKey: "assistant2_uid",
-  sourceKey: "uid",
-  as: "assistant",
-  constraints: false,
+Classroom.belongsToMany(User, {
+  through: AssistantClassroom,
+  foreignKey: "class_code",
+  otherKey: "uid",
+  as: "assistants",
 });
 Classroom.hasMany(Assignment, {
   foreignKey: "class_code",
   sourceKey: "class_code",
   as: "assignments",
 });
+Classroom.hasMany(Material, {
+  foreignKey: "class_code",
+  sourceKey: "class_code",
+  as: "materials",
+});
 
-UserClassroom.belongsTo(User, {
+AssistantClassroom.belongsTo(User, {
   foreignKey: "uid",
   as: "user",
 });
-UserClassroom.belongsTo(Classroom, {
+AssistantClassroom.belongsTo(Classroom, {
   foreignKey: "class_code",
+  as: "classroom",
+});
+
+StudentClassroom.belongsTo(User, {
+  foreignKey: "uid",
+  as: "user",
+});
+StudentClassroom.belongsTo(Classroom, {
+  foreignKey: "class_code",
+  as: "classroom",
+});
+
+Material.belongsTo(Classroom, {
+  foreignKey: "class_code",
+  sourceKey: "class_code",
   as: "classroom",
 });
 
@@ -54,7 +76,7 @@ Assignment.belongsTo(Classroom, {
 Assignment.hasMany(Submission, {
   foreignKey: "assignment_number",
   sourceKey: "assignment_number",
-  as: "submission",
+  as: "submissions",
 });
 
 Submission.belongsTo(User, {
@@ -89,7 +111,9 @@ export {
   db,
   User,
   Classroom,
-  UserClassroom,
+  AssistantClassroom,
+  StudentClassroom,
+  Material,
   Assignment,
   Submission,
   Token,

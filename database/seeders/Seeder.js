@@ -1,12 +1,12 @@
 import UserSeeder from "./UserSeeder.js";
 import ClassroomSeeder from "./ClassroomSeeder.js";
-import UserClassroomSeeder from "./UserClassroomSeeder.js";
+import StudentClassroomSeeder from "./StudentClassroomSeeder.js";
 
 const seeder = async () => {
   try {
     await UserSeeder();
     await ClassroomSeeder();
-    await UserClassroomSeeder();
+    await StudentClassroomSeeder();
 
     console.log("Database seeding successfully");
   } catch (error) {

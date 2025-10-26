@@ -7,22 +7,25 @@ export const index = async (req, res) => {
     const classrooms = await Classroom.findAll({
       include: [
         {
-          association: Classroom.associations.tutor,
-          as: "tutor",
-          attributes: ["uid", "name", "email"],
-        },
-        {
-          association: Classroom.associations.assistant,
-          as: "assistant",
-          attributes: ["uid", "name", "email"],
-        },
-        {
-          association: Classroom.associations.praktikan,
-          as: "praktikan",
+          association: Classroom.associations.assistants,
+          as: "assistants",
           attributes: ["uid", "name", "email"],
           through: {
             attributes: [],
           },
+        },
+        {
+          association: Classroom.associations.students,
+          as: "students",
+          attributes: ["uid", "name", "email"],
+          through: {
+            attributes: [],
+          },
+        },
+        {
+          association: Classroom.associations.materials,
+          as: "materials",
+          attributes: ["material_number", "title"],
         },
         {
           association: Classroom.associations.assignments,
@@ -31,6 +34,7 @@ export const index = async (req, res) => {
             "assignment_number",
             "title",
             "description",
+            "overtime",
             "startAt",
             "endAt",
           ],
@@ -60,22 +64,25 @@ export const show = async (req, res) => {
       },
       include: [
         {
-          association: Classroom.associations.tutor,
-          as: "tutor",
-          attributes: ["uid", "name", "email"],
-        },
-        {
-          association: Classroom.associations.assistant,
-          as: "assistant",
-          attributes: ["uid", "name", "email"],
-        },
-        {
-          association: Classroom.associations.praktikan,
-          as: "praktikan",
+          association: Classroom.associations.assistants,
+          as: "assistants",
           attributes: ["uid", "name", "email"],
           through: {
             attributes: [],
           },
+        },
+        {
+          association: Classroom.associations.students,
+          as: "students",
+          attributes: ["uid", "name", "email"],
+          through: {
+            attributes: [],
+          },
+        },
+        {
+          association: Classroom.associations.materials,
+          as: "materials",
+          attributes: ["material_number", "title"],
         },
         {
           association: Classroom.associations.assignments,
@@ -84,6 +91,7 @@ export const show = async (req, res) => {
             "assignment_number",
             "title",
             "description",
+            "overtime",
             "startAt",
             "endAt",
           ],

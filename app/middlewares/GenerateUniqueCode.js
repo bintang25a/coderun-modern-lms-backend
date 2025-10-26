@@ -1,4 +1,4 @@
-import Assignment from "../../database/models/Assignment.js";
+import { Assignment, Material } from "../../database/models/Model.js";
 
 export const generateAssignmentNumber = async (req, res, next) => {
   try {
@@ -37,11 +37,30 @@ export const generateAssignmentNumber = async (req, res, next) => {
   }
 };
 
+export const generateMaterialNumber = async (req, res, next) => {
+  try {
+    const { class_code, material_number: paramNumber } = req.params;
+
+    if (paramNumber) {
+      req.material_number = paramNumber;
+      return next();
+    }
+
+    const dateNumber = new Date().toISOString().replace(/[-:.TZ]/g, "");
+    const newAssignmentNumber = `${class_code}-${String(dateNumber)}`;
+
+    req.material_number = newAssignmentNumber;
+    next();
+  } catch (error) {
+    console.error("Error generating material number:", error);
+    res.status(500).json({ message: "Failed to generate material number" });
+  }
+};
+
 export const generateSubmissionNumber = async (req, res, next) => {
   try {
     const dateNumber = new Date().toISOString().replace(/[-:.TZ]/g, "");
     const idNumber = req.body.student_uid;
-    console.log(req.body);
 
     req.submission_number = `${idNumber}-${dateNumber}`;
     next();

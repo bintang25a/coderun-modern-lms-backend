@@ -15,9 +15,9 @@ export const index = async (req, res) => {
           attributes: ["name"],
         },
         {
-          association: Assignment.associations.submission,
-          as: "submission",
-          attributes: ["student_uid"],
+          association: Assignment.associations.submissions,
+          as: "submissions",
+          attributes: ["submission_number", "student_uid"],
         },
       ],
     });
@@ -49,9 +49,9 @@ export const show = async (req, res) => {
           attributes: ["name"],
         },
         {
-          association: Assignment.associations.submission,
-          as: "submission",
-          attributes: ["student_uid"],
+          association: Assignment.associations.submissions,
+          as: "submissions",
+          attributes: ["submission_number", "student_uid"],
         },
       ],
     });
@@ -112,7 +112,7 @@ export const store = async (req, res) => {
 
   if (req.file) {
     const answerPath = path.join(
-      "public/classrooms",
+      "public/classrooms/assignments",
       assignment_number,
       req.file.filename
     );
@@ -223,7 +223,7 @@ export const destroy = async (req, res) => {
 
   try {
     const assignmentPath = path.join(
-      "public/classrooms",
+      "public/classrooms/assignments",
       req.params.assignment_number
     );
     if (fs.existsSync(assignmentPath)) {

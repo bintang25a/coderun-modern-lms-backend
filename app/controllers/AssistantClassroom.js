@@ -1,19 +1,23 @@
-import { UserClassroom, User, Classroom } from "../../database/models/Model.js";
+import {
+  AssistantClassroom,
+  User,
+  Classroom,
+} from "../../database/models/Model.js";
 
 export const index = async (req, res) => {
   try {
-    const classrooms = await UserClassroom.findAll();
+    const classrooms = await AssistantClassroom.findAll();
 
     res.status(200).json({
       success: true,
-      message: "Display all users in classrooms successfully",
+      message: "Display all assistants in classrooms successfully",
       data: classrooms,
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Display all users in classrooms failed",
+      message: "Display all assistants in classrooms failed",
     });
   }
 };
@@ -24,11 +28,11 @@ export const store = async (req, res) => {
   if (!class_code || !uid) {
     return res.status(400).json({
       success: false,
-      message: "Create user in classroom failed, Field cannot empty",
+      message: "Create assistant in classroom failed, Field cannot empty",
     });
   }
 
-  const noUser = await UserClassroom.findOne({
+  const noUser = await AssistantClassroom.findOne({
     where: {
       class_code,
       uid,
@@ -38,11 +42,12 @@ export const store = async (req, res) => {
   if (noUser) {
     return res.status(400).json({
       success: false,
-      message: "Create user in classroom failed, User already in classroom",
+      message:
+        "Create assistant in classroom failed, User already in classroom",
     });
   }
 
-  const user = await UserClassroom.associations.findOne({
+  const assistant = await User.findOne({
     where: {
       uid,
     },
@@ -54,28 +59,29 @@ export const store = async (req, res) => {
     },
   });
 
-  if (!user || !classroom) {
+  if (!assistant || !classroom) {
     return res.status(404).json({
       success: false,
-      message: "Create user in classroom failed, UID or Class code not found",
+      message:
+        "Create assistant in classroom failed, UID or Class code not found",
     });
   }
 
   try {
-    await UserClassroom.create({
+    await AssistantClassroom.create({
       class_code,
       uid,
     });
 
     res.status(201).json({
       success: true,
-      message: "Create user in classroom successfully",
+      message: "Create assistant in classroom successfully",
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Create user in classroom failed",
+      message: "Create assistant in classroom failed",
     });
   }
 };
@@ -83,28 +89,29 @@ export const store = async (req, res) => {
 export const update = async (req, res) => {
   const { class_code, uid } = req.body;
 
-  const userClassroom = await UserClassroom.findOne({
+  const studentClassroom = await AssistantClassroom.findOne({
     where: {
       class_code: req.params.class_code,
       uid: req.params.uid,
     },
   });
 
-  if (!userClassroom) {
+  if (!studentClassroom) {
     return res.status(404).json({
       success: false,
-      message: "Update user in classroom failed, User or Classroom not found",
+      message:
+        "Update assistant in classroom failed, User or Classroom not found",
     });
   }
 
   if (!class_code || !uid) {
     return res.status(400).json({
       success: false,
-      message: "Update user in classroom failed, Field cannot empty",
+      message: "Update assistant in classroom failed, Field cannot empty",
     });
   }
 
-  const noUser = await UserClassroom.findOne({
+  const noUser = await AssistantClassroom.findOne({
     where: {
       class_code,
       uid,
@@ -114,11 +121,12 @@ export const update = async (req, res) => {
   if (noUser) {
     return res.status(400).json({
       success: false,
-      message: "Update user in classroom failed, User already in classroom",
+      message:
+        "Update assistant in classroom failed, User already in classroom",
     });
   }
 
-  const user = await User.findOne({
+  const assistant = await User.findOne({
     where: {
       uid,
     },
@@ -130,41 +138,42 @@ export const update = async (req, res) => {
     },
   });
 
-  if (!user || !classroom) {
+  if (!assistant || !classroom) {
     return res.status(404).json({
       success: false,
-      message: "Update user in classroom failed, UID or Class code not found",
+      message:
+        "Update assistant in classroom failed, UID or Class code not found",
     });
   }
 
   try {
-    await userClassroom.destroy({
+    await studentClassroom.destroy({
       where: {
         class_code: req.params.class_code,
         uid: req.params.uid,
       },
     });
 
-    await UserClassroom.create({
+    await AssistantClassroom.create({
       class_code,
       uid,
     });
 
     res.status(200).json({
       success: true,
-      message: "Update user in classroom successfully",
+      message: "Update assistant in classroom successfully",
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Update user in classroom failed",
+      message: "Update assistant in classroom failed",
     });
   }
 };
 
 export const destroy = async (req, res) => {
-  const classroom = await UserClassroom.findOne({
+  const classroom = await AssistantClassroom.findOne({
     where: {
       class_code: req.params.class_code,
       uid: req.params.uid,
@@ -174,12 +183,13 @@ export const destroy = async (req, res) => {
   if (!classroom) {
     return res.status(404).json({
       success: false,
-      message: "Delete user in classroom failed, User or Classroom not found",
+      message:
+        "Delete assistant in classroom failed, User or Classroom not found",
     });
   }
 
   try {
-    await UserClassroom.destroy({
+    await AssistantClassroom.destroy({
       where: {
         class_code: req.params.class_code,
         uid: req.params.uid,
@@ -188,13 +198,13 @@ export const destroy = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Delete user in classroom successfully",
+      message: "Delete assistant in classroom successfully",
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
       success: false,
-      message: "Delete user in classroom failed",
+      message: "Delete assistant in classroom failed",
     });
   }
 };
