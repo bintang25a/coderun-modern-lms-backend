@@ -4,12 +4,13 @@ import { fileURLToPath } from "url";
 import path from "path";
 import dotenv from "dotenv";
 import cors from "./config/cors.js";
+import AuthRoute from "./app/routes/AuthRoute.js";
 import UserRoute from "./app/routes/UserRoute.js";
 import ClassroomRoute from "./app/routes/ClassroomRoute.js";
 import UserClassroomRoute from "./app/routes/UserClassroomRoute.js";
 import AssignmentRoute from "./app/routes/AssignmentRoute.js";
 import SubmissionRoute from "./app/routes/SubmissionRoute.js";
-import AuthRoute from "./app/routes/AuthRoute.js";
+import CoderunRoute from "./app/routes/CoderunRoute.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(ClassroomRoute);
 app.use(UserClassroomRoute);
 app.use(AssignmentRoute);
 app.use(SubmissionRoute);
+app.use(CoderunRoute);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

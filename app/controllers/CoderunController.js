@@ -1,22 +1,23 @@
-import cors from "cors";
 import fs from "fs";
-import { spawn, exec } from "child_process";
 import path from "path";
+import { spawn, exec } from "child_process";
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+export const run = async (req, res) => {
+  const { language, codePath, input = "", uid } = req.body;
 
-const TEMP_DIR = "./temp";
-if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR);
+  if (!language || !codePath || !uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Running code failed, Field cannot empty",
+    });
+  }
 
-app.post("/run", async (req, res) => {
-  const { language, code, input = "" } = req.body;
-  if (!language || !code)
-    return res.status(400).json({ error: "language dan code wajib diisi" });
+  const TEMP_DIR = "./public/temp";
+  if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
+  }
 
-  const timestamp = Date.now();
-  const fileBase = `code_${timestamp}`;
+  const fileBase = `code_${uid}`;
   let filePath, exePath, compileCmd, runCmd;
 
   if (language === "c") {
@@ -34,16 +35,23 @@ app.post("/run", async (req, res) => {
     compileCmd = `javac "${filePath}"`;
     runCmd = `java -cp ${TEMP_DIR} ${fileBase}`;
   } else {
-    return res.status(400).json({ error: "Bahasa tidak didukung" });
+    return res.status(400).json({
+      success: false,
+      message: "Running code failed, Language unsupported",
+    });
   }
 
   // Simpan kode ke file
+  const code = fs.readFileSync(codePath);
   fs.writeFileSync(filePath, code);
 
   // Compile dulu
   exec(compileCmd, (compileErr, _, compileStderr) => {
     if (compileErr) {
-      return res.status(400).json({ error: compileStderr.toString() });
+      return res.status(400).json({
+        success: false,
+        message: "Running code failed, " + compileStderr.toString(),
+      });
     }
 
     const [command, ...args] =
@@ -79,18 +87,24 @@ app.post("/run", async (req, res) => {
 
       if (killed) {
         return res.status(400).json({
-          error:
-            "Program berjalan terlalu lama atau menunggu input berikutnya (kemungkinan loop tak berujung).",
+          success: false,
+          message: "Running code failed, Unlimited looping",
         });
       }
 
       if (error) {
-        return res.status(400).json({ error });
+        return res.status(400).json({
+          success: false,
+          message: "Running code failed, " + error.message,
+        });
       }
 
-      res.json({ output: output.trim(), exitCode: code });
+      return res.status(200).json({
+        success: false,
+        message: "Running code successfully",
+        output: output.trim(),
+        exitCode: code,
+      });
     });
   });
-});
-
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+};
