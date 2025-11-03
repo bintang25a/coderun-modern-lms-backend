@@ -7,11 +7,11 @@ import {
 } from "../controllers/StudentClassroomController.js";
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.use(verifyUser);
 router.get("/", index);
-router.post("/", store);
+router.post("/", assistantOnly, store);
 router.patch("/:class_code/:uid", assistantOnly, update);
 router.delete("/:class_code/:uid", assistantOnly, destroy);
 

@@ -10,7 +10,7 @@ import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 import { generateMaterialNumber as GMN } from "../middlewares/GenerateUniqueCode.js";
 import UploadFile from "../middlewares/UploadMaterialFile.js";
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.use(verifyUser);
 router.get("/", index);

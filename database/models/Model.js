@@ -3,7 +3,8 @@ import User from "./User.js";
 import Classroom from "./Classroom.js";
 import AssistantClassroom from "./AssistantClassroom.js";
 import StudentClassroom from "./StudentClassroom.js";
-import Material from "./Materials.js";
+import MaterialClassroom from "./MaterialClassroom.js";
+import Material from "./Material.js";
 import Assignment from "./Assignment.js";
 import Submission from "./Submission.js";
 import { DataTypes } from "sequelize";
@@ -33,15 +34,16 @@ Classroom.belongsToMany(User, {
   otherKey: "uid",
   as: "assistants",
 });
+Classroom.belongsToMany(Material, {
+  through: MaterialClassroom,
+  foreignKey: "class_code",
+  otherKey: "material_number",
+  as: "materials",
+});
 Classroom.hasMany(Assignment, {
   foreignKey: "class_code",
   sourceKey: "class_code",
   as: "assignments",
-});
-Classroom.hasMany(Material, {
-  foreignKey: "class_code",
-  sourceKey: "class_code",
-  as: "materials",
 });
 
 AssistantClassroom.belongsTo(User, {
@@ -62,10 +64,20 @@ StudentClassroom.belongsTo(Classroom, {
   as: "classroom",
 });
 
-Material.belongsTo(Classroom, {
+MaterialClassroom.belongsTo(Material, {
+  foreignKey: "material_number",
+  as: "material",
+});
+MaterialClassroom.belongsTo(Classroom, {
   foreignKey: "class_code",
-  sourceKey: "class_code",
   as: "classroom",
+});
+
+Material.belongsToMany(Classroom, {
+  through: MaterialClassroom,
+  foreignKey: "material_number",
+  otherKey: "class_code",
+  as: "classrooms",
 });
 
 Assignment.belongsTo(Classroom, {
@@ -113,6 +125,7 @@ export {
   Classroom,
   AssistantClassroom,
   StudentClassroom,
+  MaterialClassroom,
   Material,
   Assignment,
   Submission,

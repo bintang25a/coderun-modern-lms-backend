@@ -6,13 +6,13 @@ const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     try {
       const publicPath = path.resolve("public");
-      const classFolder = path.join(publicPath, "classrooms/materials");
+      const materialFolder = path.join(publicPath, "materials");
 
-      if (!fs.existsSync(classFolder)) {
-        fs.mkdirSync(classFolder, { recursive: true });
+      if (!fs.existsSync(materialFolder)) {
+        fs.mkdirSync(materialFolder, { recursive: true });
       }
 
-      cb(null, classFolder);
+      cb(null, materialFolder);
     } catch (err) {
       cb(err);
     }

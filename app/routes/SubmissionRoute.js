@@ -11,7 +11,7 @@ import { generateSubmissionNumber as GSN } from "../middlewares/GenerateUniqueCo
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 import uploadAnswer from "../middlewares/UploadAssignmentFile.js";
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.use(verifyUser);
 router.get("/", index);

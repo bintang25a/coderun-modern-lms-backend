@@ -9,7 +9,7 @@ import {
 import { verifyUser, adminOnly } from "../middlewares/AuthUser.js";
 import uploadPhoto from "../middlewares/UploadUserPhoto.js";
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.use(verifyUser);
 router.get("/", index);

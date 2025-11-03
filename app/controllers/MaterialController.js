@@ -5,14 +5,14 @@ import path from "path";
 export const index = async (req, res) => {
   try {
     const materials = await Material.findAll({
-      where: {
-        class_code: req.params.class_code,
-      },
       include: [
         {
-          association: Material.associations.classroom,
-          as: "classroom",
-          attributes: ["name"],
+          association: Material.associations.classrooms,
+          as: "classrooms",
+          attributes: ["class_code", "name"],
+          through: {
+            attributes: [],
+          },
         },
       ],
     });
@@ -39,9 +39,12 @@ export const show = async (req, res) => {
       },
       include: [
         {
-          association: Material.associations.classroom,
-          as: "classroom",
-          attributes: ["name"],
+          association: Material.associations.classrooms,
+          as: "classrooms",
+          attributes: ["class_code", "name"],
+          through: {
+            attributes: [],
+          },
         },
       ],
     });
@@ -70,7 +73,7 @@ export const show = async (req, res) => {
 export const store = async (req, res) => {
   const { assistant_uid, title } = req.body;
 
-  if (!assistant_uid || !title) {
+  if (!assistant_uid || !title || !req.file) {
     return res.status(400).json({
       success: false,
       message: "Create material failed, Field cannot empty",
@@ -78,18 +81,11 @@ export const store = async (req, res) => {
   }
 
   const material_number = req.material_number;
-  const class_code = req.params.class_code;
-
-  const materialPath = path.join(
-    "public/classrooms/materials",
-    material_number,
-    req.file.filename
-  );
+  const materialPath = path.join("public/materials", req.file.filename);
 
   try {
     await Material.create({
       material_number,
-      class_code,
       assistant_uid,
       title,
       material: materialPath,

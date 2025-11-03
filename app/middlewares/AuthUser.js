@@ -5,7 +5,7 @@ export const verifyUser = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const activeToken = authHeader && authHeader.split(" ")[1];
 
-  if (!activeToken) {
+  if (!activeToken || !authHeader) {
     return res.status(401).json({
       success: false,
       message: "Access denied, Unuthorized!",
@@ -48,20 +48,14 @@ export const verifyUser = async (req, res, next) => {
 };
 
 export const assistantOnly = async (req, res, next) => {
-  const user = await User.findOne({
-    where: {
-      uid: req.uid,
-    },
-  });
-
-  if (!user) {
-    return res.status(404).json({
+  if (!req.user) {
+    return res.status(401).json({
       success: false,
-      message: "Access denied, User not found",
+      message: "Access denied, Unuthorized!",
     });
   }
 
-  if (user.role != "Admin" && user.role != "Asisten") {
+  if (req.role != "Admin" && req.role != "Asisten") {
     return res.status(403).json({
       success: false,
       message: "Access denied, Assistant only",
@@ -72,20 +66,14 @@ export const assistantOnly = async (req, res, next) => {
 };
 
 export const adminOnly = async (req, res, next) => {
-  const user = await User.findOne({
-    where: {
-      uid: req.uid,
-    },
-  });
-
-  if (!user) {
-    return res.status(404).json({
+  if (!req.user) {
+    return res.status(401).json({
       success: false,
-      message: "Access denied, User not found",
+      message: "Access denied, Unuthorized!",
     });
   }
 
-  if (user.role != "Admin") {
+  if (req.role != "Admin") {
     return res.status(403).json({
       success: false,
       message: "Access denied, Admin only",

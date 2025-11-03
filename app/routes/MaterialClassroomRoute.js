@@ -4,7 +4,7 @@ import {
   store,
   update,
   destroy,
-} from "../controllers/AssistantClassroom.js";
+} from "../controllers/MaterialClassroomController.js";
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 
 const router = express.Router({ mergeParams: true });

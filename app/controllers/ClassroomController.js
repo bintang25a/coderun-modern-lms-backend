@@ -26,6 +26,9 @@ export const index = async (req, res) => {
           association: Classroom.associations.materials,
           as: "materials",
           attributes: ["material_number", "title"],
+          through: {
+            attributes: [],
+          },
         },
         {
           association: Classroom.associations.assignments,
@@ -83,6 +86,9 @@ export const show = async (req, res) => {
           association: Classroom.associations.materials,
           as: "materials",
           attributes: ["material_number", "title"],
+          through: {
+            attributes: [],
+          },
         },
         {
           association: Classroom.associations.assignments,

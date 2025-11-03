@@ -16,16 +16,6 @@ const Material = db.define("materials", {
     },
     onUpdate: "CASCADE",
   },
-  class_code: {
-    type: DataTypes.STRING(32),
-    allowNull: false,
-    references: {
-      model: "classrooms",
-      key: "class_code",
-    },
-    onDelete: "CASCADE",
-    onUpdate: "CASCADE",
-  },
   title: {
     type: DataTypes.STRING,
     allowNull: false,

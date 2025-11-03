@@ -112,7 +112,7 @@ export const store = async (req, res) => {
 
   if (req.file) {
     const answerPath = path.join(
-      "public/classrooms/assignments",
+      "public/classrooms",
       assignment_number,
       req.file.filename
     );
@@ -178,6 +178,19 @@ export const update = async (req, res) => {
   }
 
   try {
+    const assignment_number = assignment.assignment_number;
+    let answer_key = null;
+
+    if (req.file) {
+      const answerPath = path.join(
+        "public/classrooms",
+        assignment_number,
+        req.file.filename
+      );
+
+      answer_key = answerPath;
+    }
+
     await Assignment.update(
       {
         assistant_uid,
@@ -186,6 +199,7 @@ export const update = async (req, res) => {
         startAt,
         endAt,
         overtime,
+        answer_key,
       },
       {
         where: {
@@ -223,7 +237,7 @@ export const destroy = async (req, res) => {
 
   try {
     const assignmentPath = path.join(
-      "public/classrooms/assignments",
+      "public/classrooms",
       req.params.assignment_number
     );
     if (fs.existsSync(assignmentPath)) {

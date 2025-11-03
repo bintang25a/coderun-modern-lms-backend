@@ -39,15 +39,8 @@ export const generateAssignmentNumber = async (req, res, next) => {
 
 export const generateMaterialNumber = async (req, res, next) => {
   try {
-    const { class_code, material_number: paramNumber } = req.params;
-
-    if (paramNumber) {
-      req.material_number = paramNumber;
-      return next();
-    }
-
     const dateNumber = new Date().toISOString().replace(/[-:.TZ]/g, "");
-    const newAssignmentNumber = `${class_code}-${String(dateNumber)}`;
+    const newAssignmentNumber = String(dateNumber);
 
     req.material_number = newAssignmentNumber;
     next();

@@ -8,7 +8,7 @@ import {
 } from "../controllers/ClassroomController.js";
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.use(verifyUser);
 router.get("/", index);
