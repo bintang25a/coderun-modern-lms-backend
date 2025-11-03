@@ -47,9 +47,10 @@ export const labelling = (req, res) => {
   };
 
   const main = async () => {
-    const basePath = path.resolve("public");
-    const inputDir = path.join(basePath, "classrooms", assignment_number);
-    const outputDir = path.join(inputDir, "Output");
+    const publicPath = path.resolve("public");
+    const tempPath = path.resolve("temp");
+    const inputDir = path.join(publicPath, "classrooms", assignment_number);
+    const outputDir = path.join(tempPath, assignment_number);
 
     if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
 
@@ -82,8 +83,7 @@ export const run = async (req, res) => {
     });
   }
 
-  const srcPath = path.resolve("src");
-  const tempDir = path.join(srcPath, "temp");
+  const tempDir = path.resolve("temp");
   if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
   }
