@@ -71,12 +71,19 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { assistant_uid, title } = req.body;
+  const { title } = req.body;
 
-  if (!assistant_uid || !title || !req.file) {
+  if (!title || !req.file) {
     return res.status(400).json({
       success: false,
       message: "Create material failed, Field cannot empty",
+    });
+  }
+
+  if (!req.uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Create material failed, User unknown",
     });
   }
 
@@ -86,7 +93,7 @@ export const store = async (req, res) => {
   try {
     await Material.create({
       material_number,
-      assistant_uid,
+      assistant_uid: req.uid,
       title,
       material: materialPath,
     });
@@ -105,7 +112,7 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { assistant_uid, title } = req.body;
+  const { title } = req.body;
 
   const material = await Material.findOne({
     where: {
@@ -120,17 +127,24 @@ export const update = async (req, res) => {
     });
   }
 
-  if (!assistant_uid || !title) {
+  if (!title) {
     return res.status(400).json({
       success: false,
       message: "Create material failed, Field cannot empty",
     });
   }
 
+  if (!req.uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Update material failed, User unknown",
+    });
+  }
+
   try {
     await Material.update(
       {
-        assistant_uid,
+        assistant_uid: req.uid,
         title,
       },
       {

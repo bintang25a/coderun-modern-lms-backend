@@ -1,6 +1,4 @@
 import { Classroom } from "../../database/models/Model.js";
-import fs from "fs";
-import path from "path";
 
 export const index = async (req, res) => {
   try {
@@ -127,7 +125,7 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { class_code, name, assistant1_uid, assistant2_uid } = req.body;
+  const { class_code, name } = req.body;
 
   if (!class_code || !name) {
     return res.status(400).json({
@@ -153,8 +151,6 @@ export const store = async (req, res) => {
     await Classroom.create({
       class_code,
       name,
-      assistant1_uid,
-      assistant2_uid,
     });
 
     res.status(201).json({
@@ -171,7 +167,7 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { name, assistant1_uid, assistant2_uid } = req.body;
+  const { name } = req.body;
 
   const classroom = await Classroom.findOne({
     where: {
@@ -197,8 +193,6 @@ export const update = async (req, res) => {
     await classroom.update(
       {
         name,
-        assistant1_uid,
-        assistant2_uid,
       },
       {
         where: {
@@ -235,16 +229,6 @@ export const destroy = async (req, res) => {
   }
 
   try {
-    const publicPath = path.resolve("public");
-    const classroomPath = path.join(
-      publicPath,
-      "classrooms",
-      classroom.class_code
-    );
-    if (fs.existsSync(classroomPath)) {
-      fs.unlinkSync(classroomPath);
-    }
-
     await Classroom.destroy({
       where: {
         class_code: req.params.class_code,

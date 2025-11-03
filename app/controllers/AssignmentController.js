@@ -41,6 +41,7 @@ export const show = async (req, res) => {
     const assignment = await Assignment.findOne({
       where: {
         assignment_number: req.params.assignment_number,
+        class_code: req.params.class_code,
       },
       include: [
         {
@@ -78,20 +79,19 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { assistant_uid, title, description, startAt, endAt, overtime } =
-    req.body;
+  const { title, description, startAt, endAt, overtime } = req.body;
 
-  if (
-    !assistant_uid ||
-    !title ||
-    !description ||
-    !startAt ||
-    !endAt ||
-    !overtime
-  ) {
+  if (!title || !description || !startAt || !endAt || !overtime) {
     return res.status(400).json({
       success: false,
       message: "Create assignment failed, Field cannot empty",
+    });
+  }
+
+  if (!req.uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Create assignment failed, User unknown",
     });
   }
 
@@ -124,7 +124,7 @@ export const store = async (req, res) => {
     await Assignment.create({
       assignment_number,
       class_code,
-      assistant_uid,
+      assistant_uid: req.uid,
       title,
       description,
       answer_key,
@@ -147,12 +147,12 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { assistant_uid, title, description, startAt, endAt, overtime } =
-    req.body;
+  const { title, description, startAt, endAt, overtime } = req.body;
 
   const assignment = await Assignment.findOne({
     where: {
       assignment_number: req.params.assignment_number,
+      class_code: req.params.class_code,
     },
   });
 
@@ -163,17 +163,17 @@ export const update = async (req, res) => {
     });
   }
 
-  if (
-    !assistant_uid ||
-    !title ||
-    !description ||
-    !startAt ||
-    !endAt ||
-    !overtime
-  ) {
+  if (!title || !description || !startAt || !endAt || !overtime) {
     return res.status(400).json({
       success: false,
       message: "Update assignment failed, Field cannot empty",
+    });
+  }
+
+  if (!req.uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Update assignment failed, User unknown",
     });
   }
 
@@ -193,7 +193,7 @@ export const update = async (req, res) => {
 
     await Assignment.update(
       {
-        assistant_uid,
+        assistant_uid: req.uid,
         title,
         description,
         startAt,
@@ -225,6 +225,7 @@ export const destroy = async (req, res) => {
   const assignment = await Assignment.findOne({
     where: {
       assignment_number: req.params.assignment_number,
+      class_code: req.params.class_code,
     },
   });
 

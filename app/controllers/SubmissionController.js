@@ -36,6 +36,7 @@ export const show = async (req, res) => {
     const submission = await Submission.findOne({
       where: {
         submission_number: req.params.submission_number,
+        assignment_number: req.params.assignment_number,
       },
       include: [
         {
@@ -70,9 +71,7 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { student_uid } = req.body;
-
-  if (!student_uid) {
+  if (!req.uid) {
     return res.status(400).json({
       success: false,
       message: "Create submission failed, Student UID unidentified",
@@ -81,7 +80,7 @@ export const store = async (req, res) => {
 
   const { assignment_number } = req.params;
   const answerPath = path.join(
-    "public/classrooms/assignments",
+    "public/classrooms",
     assignment_number,
     req.file.filename
   );
@@ -105,7 +104,7 @@ export const store = async (req, res) => {
     await Submission.create({
       submission_number: req.submission_number,
       assignment_number,
-      student_uid,
+      student_uid: req.uid,
       answer,
     });
 
@@ -126,6 +125,7 @@ export const grade = async (req, res) => {
   const submission = await Submission.findOne({
     where: {
       submission_number: req.params.submission_number,
+      assignment_number: req.params.assignment_number,
     },
   });
 
@@ -136,12 +136,19 @@ export const grade = async (req, res) => {
     });
   }
 
-  const { grade, assistant_uid } = req.body;
+  const { grade } = req.body;
 
-  if (!grade || !assistant_uid) {
+  if (!grade) {
     return res.status(400).json({
       success: false,
       message: "Grading submission failed, Field cannot empty",
+    });
+  }
+
+  if (!req.uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Grading submission failed, User unknown",
     });
   }
 
@@ -149,7 +156,7 @@ export const grade = async (req, res) => {
     await Submission.update(
       {
         grade,
-        assistant_uid,
+        assistant_uid: req.uid,
       },
       {
         where: {
@@ -175,6 +182,7 @@ export const update = async (req, res) => {
   const submission = await Submission.findOne({
     where: {
       submission_number: req.params.submission_number,
+      assignment_number: req.params.assignment_number,
     },
   });
 
@@ -225,6 +233,7 @@ export const destroy = async (req, res) => {
   const submission = await Submission.findOne({
     where: {
       submission_number: req.params.submission_number,
+      assignment_number: req.params.assignment_number,
     },
   });
 
