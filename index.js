@@ -13,7 +13,7 @@ import StudentClassroomRoute from "./app/routes/StudentClassroomRoute.js";
 import MaterialClassroomRoute from "./app/routes/MaterialClassroomRoute.js";
 import AssignmentRoute from "./app/routes/AssignmentRoute.js";
 import SubmissionRoute from "./app/routes/SubmissionRoute.js";
-import CoderunRoute from "./app/routes/CoderunRoute.js";
+import ActionsRoute from "./app/routes/ActionsRoute.js";
 
 dotenv.config();
 
@@ -33,7 +33,7 @@ app.use("/students", StudentClassroomRoute);
 app.use("/classmaterial", MaterialClassroomRoute);
 app.use("/assignments/:class_code", AssignmentRoute);
 app.use("/submissions/:assignment_number", SubmissionRoute);
-app.use(CoderunRoute);
+app.use(ActionsRoute);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
