@@ -37,8 +37,8 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    const { assistant_uid, student_uid } = req.body;
-    const identifier = assistant_uid ? "answer_key" : student_uid || undefined;
+    const identifier =
+      req.role != "Praktikan" ? "answer_key" : req.uid || undefined;
     const fileName = `${identifier}${path.extname(file.originalname)}`;
 
     cb(null, fileName);

@@ -17,7 +17,7 @@ export const index = async (req, res) => {
         {
           association: Assignment.associations.submissions,
           as: "submissions",
-          attributes: ["submission_number", "student_uid"],
+          attributes: ["submission_number", "student_uid", "grade"],
         },
       ],
     });
@@ -52,7 +52,7 @@ export const show = async (req, res) => {
         {
           association: Assignment.associations.submissions,
           as: "submissions",
-          attributes: ["submission_number", "student_uid"],
+          attributes: ["submission_number", "student_uid", "grade"],
         },
       ],
     });

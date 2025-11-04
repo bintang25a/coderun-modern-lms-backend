@@ -6,10 +6,60 @@ import C from "tree-sitter-c";
 import CPP from "tree-sitter-cpp";
 import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
+import { Assignment } from "../../database/models/Model.js";
 
-export const labelling = (req, res) => {
-  // const { assignment_number } = req.body;
-  const assignment_number = "CS25C3-01";
+export const labelling = async (req, res) => {
+  const { assignment_number, language } = req.body;
+
+  if (!assignment_number || !language) {
+    return res.status(400).json({
+      success: false,
+      message: "Automatic grading failed, Field cannot empty",
+    });
+  }
+
+  const assignment = await Assignment.findOne({
+    where: {
+      assignment_number,
+    },
+    include: [
+      {
+        association: Assignment.associations.submissions,
+        as: "submissions",
+        attributes: ["submission_number", "student_uid", "answer", "grade"],
+      },
+    ],
+  });
+
+  if (!assignment) {
+    return res.status(404).json({
+      success: false,
+      message: "Automatic grading failed, Assignment not found",
+    });
+  }
+
+  const tempPath = path.resolve("temp");
+  const outputDir = path.join(tempPath, assignment_number);
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  const parser = new Parser();
+
+  if (language === "c") {
+    parser.setLanguage(C);
+  } else if (language === "cpp") {
+    parser.setLanguage(CPP);
+  } else if (language === "java") {
+    parser.setLanguage(Java);
+  } else if (language === "python") {
+    parser.setLanguage(Python);
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: "Automatic grading failed, Unsupported language",
+    });
+  }
 
   const countNodeTypes = (node, counter) => {
     const type = node.type;
@@ -20,19 +70,18 @@ export const labelling = (req, res) => {
     }
   };
 
-  const parseFile = async (filePath) => {
+  let labelError = 0;
+  const parseFile = async (filePath, submission_number) => {
     const ext = path.extname(filePath);
-    const parser = new Parser();
 
-    if (ext === ".c") {
-      parser.setLanguage(C);
-    } else if (ext === ".cpp") {
-      parser.setLanguage(CPP);
-    } else if (ext === ".java") {
-      parser.setLanguage(Java);
-    } else if (ext === ".python") {
-      parser.setLanguage(Python);
-    } else throw new Error(`Unsupported file extension: ${ext}`);
+    if (ext != `.${language}`) {
+      labelError++;
+
+      return {
+        submission_number,
+        message: "Wrong language",
+      };
+    }
 
     const code = fs.readFileSync(filePath, "utf8");
     const tree = parser.parse(code);
@@ -41,35 +90,41 @@ export const labelling = (req, res) => {
     countNodeTypes(tree.rootNode, counter);
 
     return {
-      submission_number: "220407",
+      submission_number,
       label_count: counter,
     };
   };
 
-  const main = async () => {
-    const publicPath = path.resolve("public");
-    const tempPath = path.resolve("temp");
-    const inputDir = path.join(publicPath, "classrooms", assignment_number);
-    const outputDir = path.join(tempPath, assignment_number);
+  const submissions = assignment.submissions;
 
-    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
-
-    const files = fs
-      .readdirSync(inputDir)
-      .filter((f) => /\.(c|cpp|java|python)$/.test(f));
-
-    for (const file of files) {
-      const filePath = path.join(inputDir, file);
-      console.log(`Parsing ${filePath} ...`);
-      const jsonTree = await parseFile(filePath);
-      const outPath = path.join(outputDir, `${file}.json`);
-      fs.writeFileSync(outPath, JSON.stringify(jsonTree, null, 2));
+  for (const submission of submissions) {
+    if (submission.grade != null) {
+      continue;
     }
 
-    console.log("✅ Parsing selesai! File JSON tersimpan di folder output/");
-  };
+    const fileNumber = submission.submission_number;
+    const filePath = path.resolve(submission.answer);
+    const fileName = path.basename(filePath);
 
-  main().catch(console.error);
+    const fileParse = await parseFile(filePath, fileNumber);
+
+    if (!fileParse?.message) {
+      const outPath = path.join(outputDir, `${fileName}.json`);
+      fs.writeFileSync(outPath, JSON.stringify(fileParse, null, 2));
+    }
+  }
+
+  if (submissions.length == labelError) {
+    return res.status(400).json({
+      success: false,
+      message: `Automatic grading failed, All file error`,
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `Automatic grading successfully, ${labelError} file error`,
+  });
 };
 
 export const run = async (req, res) => {

@@ -53,7 +53,7 @@ export const generateMaterialNumber = async (req, res, next) => {
 export const generateSubmissionNumber = async (req, res, next) => {
   try {
     const dateNumber = new Date().toISOString().replace(/[-:.TZ]/g, "");
-    const idNumber = req.body.student_uid;
+    const idNumber = req.uid;
 
     req.submission_number = `${idNumber}-${dateNumber}`;
     next();
