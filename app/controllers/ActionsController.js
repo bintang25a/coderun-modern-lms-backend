@@ -8,41 +8,165 @@ import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
 import { Assignment } from "../../database/models/Model.js";
 
-export const sbcam = async (req, res) => {
-  // Fungsi membaca JSON
-  function readJSON(filePath) {
-    const data = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(data).label_count;
+export const labelling = async (req, res) => {
+  const { assignment_number, language } = req.body;
+
+  if (!assignment_number || !language) {
+    return res.status(400).json({
+      success: false,
+      message: "Automatic grading failed, Field cannot empty",
+    });
   }
 
-  // Fungsi menghitung SBCAM
-  function calculateSBCAM(modelLabels, testLabels) {
-    const allKeys = new Set([
-      ...Object.keys(modelLabels),
-      ...Object.keys(testLabels),
-    ]);
-    let minSum = 0;
-    let maxSum = 0;
+  const assignment = await Assignment.findOne({
+    where: {
+      assignment_number,
+    },
+    include: [
+      {
+        association: Assignment.associations.submissions,
+        as: "submissions",
+        attributes: ["submission_number", "student_uid", "answer", "grade"],
+      },
+    ],
+  });
 
-    for (const key of allKeys) {
-      const a = modelLabels[key] || 0;
-      const b = testLabels[key] || 0;
-      minSum += Math.min(a, b);
-      maxSum += Math.max(a, b);
+  if (!assignment) {
+    return res.status(404).json({
+      success: false,
+      message: "Automatic grading failed, Assignment not found",
+    });
+  }
+
+  const tempPath = path.resolve("temp");
+  const outputDir = path.join(tempPath, assignment_number);
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  const parser = new Parser();
+
+  if (language === "c") {
+    parser.setLanguage(C);
+  } else if (language === "cpp") {
+    parser.setLanguage(CPP);
+  } else if (language === "java") {
+    parser.setLanguage(Java);
+  } else if (language === "python") {
+    parser.setLanguage(Python);
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: "Automatic grading failed, Unsupported language",
+    });
+  }
+
+  const countNodeTypes = (node, counter) => {
+    const type = node.type;
+    counter[type] = (counter[type] || 0) + 1;
+
+    for (let i = 0; i < node.childCount; i++) {
+      countNodeTypes(node.child(i), counter);
+    }
+  };
+
+  let labelError = 0;
+  const parseFile = async (filePath, keyPath, submission_number) => {
+    const ext = path.extname(filePath);
+
+    if (!fs.existsSync(filePath)) {
+      labelError++;
+
+      return {
+        submission_number,
+        message: "Code not found",
+      };
     }
 
-    return maxSum === 0 ? 0 : minSum / maxSum;
+    if (ext != `.${language}`) {
+      labelError++;
+
+      return {
+        submission_number,
+        message: "Wrong language",
+      };
+    }
+
+    const keyCode = fs.readFileSync(keyPath, "utf8");
+    const keyTree = parser.parse(keyCode);
+    const code = fs.readFileSync(filePath, "utf8");
+    const tree = parser.parse(code);
+
+    const keyCounter = {};
+    countNodeTypes(keyTree.rootNode, keyCounter);
+
+    const counter = {};
+    countNodeTypes(tree.rootNode, counter);
+
+    const allKeys = new Set([
+      ...Object.keys(keyCounter),
+      ...Object.keys(counter),
+    ]);
+
+    let score = 0;
+    let S = {};
+    let T = 0;
+
+    for (const key of allKeys) {
+      const keyNode = keyCounter[key] || 0;
+      const answerNode = counter[key] || 0;
+
+      S[key] = Math.min(keyNode, answerNode);
+
+      score += Number(S[key].toFixed(2));
+      T += keyNode;
+    }
+
+    score = (score / T) * 100;
+
+    return {
+      submission_number,
+      score: Number(score.toFixed(2)),
+      S,
+      counter,
+      keyCounter,
+    };
+  };
+
+  const submissions = assignment.submissions;
+
+  for (const submission of submissions) {
+    if (submission.grade != null) {
+      continue;
+    }
+
+    const keyFile = assignment.answer_key;
+    const fileNumber = submission.submission_number;
+    const filePath = path.resolve(submission.answer);
+    const fileName = path.basename(filePath);
+
+    const fileParse = await parseFile(filePath, keyFile, fileNumber);
+
+    if (!fileParse?.message) {
+      const outPath = path.join(outputDir, `${fileName}.json`);
+      fs.writeFileSync(outPath, JSON.stringify(fileParse, null, 2));
+    }
   }
 
-  // Jalankan
-  const model = readJSON("./model.json");
-  const student = readJSON("./student.json");
+  if (submissions.length == labelError) {
+    return res.status(400).json({
+      success: false,
+      message: `Automatic grading failed, All file error`,
+    });
+  }
 
-  const sbcamValue = calculateSBCAM(model, student);
-  console.log(`SBCAM Score: ${sbcamValue.toFixed(4)}`);
+  return res.status(200).json({
+    success: true,
+    message: `Automatic grading successfully, ${labelError} file error`,
+  });
 };
 
-export const labelling = async (req, res) => {
+export const countSBCAM = async (req, res) => {
   const { assignment_number, language } = req.body;
 
   if (!assignment_number || !language) {
