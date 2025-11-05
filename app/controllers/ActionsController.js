@@ -8,6 +8,40 @@ import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
 import { Assignment } from "../../database/models/Model.js";
 
+export const sbcam = async (req, res) => {
+  // Fungsi membaca JSON
+  function readJSON(filePath) {
+    const data = fs.readFileSync(filePath, "utf-8");
+    return JSON.parse(data).label_count;
+  }
+
+  // Fungsi menghitung SBCAM
+  function calculateSBCAM(modelLabels, testLabels) {
+    const allKeys = new Set([
+      ...Object.keys(modelLabels),
+      ...Object.keys(testLabels),
+    ]);
+    let minSum = 0;
+    let maxSum = 0;
+
+    for (const key of allKeys) {
+      const a = modelLabels[key] || 0;
+      const b = testLabels[key] || 0;
+      minSum += Math.min(a, b);
+      maxSum += Math.max(a, b);
+    }
+
+    return maxSum === 0 ? 0 : minSum / maxSum;
+  }
+
+  // Jalankan
+  const model = readJSON("./model.json");
+  const student = readJSON("./student.json");
+
+  const sbcamValue = calculateSBCAM(model, student);
+  console.log(`SBCAM Score: ${sbcamValue.toFixed(4)}`);
+};
+
 export const labelling = async (req, res) => {
   const { assignment_number, language } = req.body;
 
@@ -71,8 +105,17 @@ export const labelling = async (req, res) => {
   };
 
   let labelError = 0;
-  const parseFile = async (filePath, submission_number) => {
+  const parseFile = async (filePath, keyPath, submission_number) => {
     const ext = path.extname(filePath);
+
+    if (!fs.existsSync(filePath)) {
+      labelError++;
+
+      return {
+        submission_number,
+        message: "Code not found",
+      };
+    }
 
     if (ext != `.${language}`) {
       labelError++;
@@ -83,15 +126,43 @@ export const labelling = async (req, res) => {
       };
     }
 
+    const keyCode = fs.readFileSync(keyPath, "utf8");
+    const keyTree = parser.parse(keyCode);
     const code = fs.readFileSync(filePath, "utf8");
     const tree = parser.parse(code);
+
+    const keyCounter = {};
+    countNodeTypes(keyTree.rootNode, keyCounter);
 
     const counter = {};
     countNodeTypes(tree.rootNode, counter);
 
+    const allKeys = new Set([
+      ...Object.keys(keyCounter),
+      ...Object.keys(counter),
+    ]);
+
+    let score = 0;
+    let Fs = {};
+
+    for (const key of allKeys) {
+      const tf = keyCounter[key] || 0;
+      const sf = counter[key] || 0;
+
+      Fs[key] = Number((1 - Math.abs(tf - sf) / tf).toFixed(2));
+      Fs[key] = Number(Math.max(0, Math.min(1, Fs[key])).toFixed(2));
+
+      score = Number(score.toFixed(2)) + Number(Fs[key].toFixed(2));
+    }
+
+    score = (score / Object.keys(keyCounter).length) * 100;
+
     return {
       submission_number,
-      label_count: counter,
+      score: Number(score.toFixed(2)),
+      Fs,
+      counter,
+      keyCounter,
     };
   };
 
@@ -102,11 +173,12 @@ export const labelling = async (req, res) => {
       continue;
     }
 
+    const keyFile = assignment.answer_key;
     const fileNumber = submission.submission_number;
     const filePath = path.resolve(submission.answer);
     const fileName = path.basename(filePath);
 
-    const fileParse = await parseFile(filePath, fileNumber);
+    const fileParse = await parseFile(filePath, keyFile, fileNumber);
 
     if (!fileParse?.message) {
       const outPath = path.join(outputDir, `${fileName}.json`);
@@ -208,6 +280,8 @@ export const run = async (req, res) => {
       error += data.toString();
     });
 
+    let results = [];
+
     runProcess.on("close", (code) => {
       clearTimeout(timeout);
 
@@ -217,6 +291,14 @@ export const run = async (req, res) => {
           message: "Running code failed, Unlimited looping",
         });
       }
+
+      results.push({
+        input,
+        output: output.trim(),
+        expected: expectedOutput,
+        pass: actualOutput === expectedOutput ? 1 : 0,
+        weight: weight,
+      });
 
       if (error) {
         return res.status(400).json({
