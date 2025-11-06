@@ -112,7 +112,7 @@ export const store = async (req, res) => {
 
   if (req.file) {
     const answerPath = path.join(
-      "public/classrooms",
+      "public/assignments",
       assignment_number,
       req.file.filename
     );
@@ -183,7 +183,7 @@ export const update = async (req, res) => {
 
     if (req.file) {
       const answerPath = path.join(
-        "public/classrooms",
+        "public/assignments",
         assignment_number,
         req.file.filename
       );
@@ -238,7 +238,7 @@ export const destroy = async (req, res) => {
 
   try {
     const assignmentPath = path.join(
-      "public/classrooms",
+      "public/assignments",
       req.params.assignment_number
     );
     if (fs.existsSync(assignmentPath)) {

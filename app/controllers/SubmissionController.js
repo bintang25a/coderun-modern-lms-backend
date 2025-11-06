@@ -80,7 +80,7 @@ export const store = async (req, res) => {
 
   const { assignment_number } = req.params;
   const answerPath = path.join(
-    "public/classrooms",
+    "public/assignments",
     assignment_number,
     req.file.filename
   );
@@ -199,7 +199,7 @@ export const update = async (req, res) => {
     if (req.file) {
       const { assignment_number } = req.params;
       answer = path.join(
-        "public/classrooms/assignments",
+        "public/assignments",
         assignment_number,
         req.file.filename
       );

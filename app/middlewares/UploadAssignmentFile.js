@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
         codeNumber = req.params.assignment_number;
       }
 
-      const classFolder = path.join(publicPath, "classrooms", codeNumber);
+      const classFolder = path.join(publicPath, "assignments", codeNumber);
 
       if (!fs.existsSync(classFolder)) {
         fs.mkdirSync(classFolder, { recursive: true });
