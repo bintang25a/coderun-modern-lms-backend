@@ -8,7 +8,7 @@ import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
 import { Assignment } from "../../database/models/Model.js";
 
-export const parsing = async (req, res) => {
+export const labelling = async (req, res) => {
   const { assignment_number, language } = req.body;
 
   if (!assignment_number || !language) {
@@ -55,7 +55,6 @@ export const parsing = async (req, res) => {
     });
   }
 
-  // Count nodes
   const countNodeTypes = (node, counter) => {
     const type = node.type;
     counter[type] = (counter[type] || 0) + 1;
@@ -114,11 +113,23 @@ export const parsing = async (req, res) => {
     };
   };
 
-  const datasetDir = path.resolve(
-    `database/datasets/${language.toUpperCase()}`
-  );
+  const datasetDir = path.resolve(`database/datasets/${language}`);
   const datasetFiles = fs.readdirSync(datasetDir);
   const keyFile = assignment.answer_key;
+
+  const keyCode = fs.readFileSync(keyFile, "utf8");
+  const keyTree = parser.parse(keyCode);
+  const keyCounter = {};
+  countNodeTypes(keyTree.rootNode, keyCounter);
+
+  Object.keys(keyCounter).forEach((k) => nodeKeys.add(k));
+
+  results.push({
+    row_id: "key",
+    score: 100,
+    counter: keyCounter,
+  });
+
   let row_id = 1;
 
   for (const file of datasetFiles) {
@@ -171,7 +182,7 @@ export const parsing = async (req, res) => {
   });
 };
 
-export const labelling = async (req, res) => {
+export const parse2 = async (req, res) => {
   const { assignment_number, language } = req.body;
 
   if (!assignment_number || !language) {
