@@ -74,21 +74,58 @@ export default async function SubmissionSeeder() {
       answer: "public\\assignments\\CS25C3-01\\U019.c",
       grade: null,
     },
+
+    {
+      submission_number: "U001-20251104062613177",
+      assignment_number: "IF23A1-01",
+      student_uid: "U001",
+      answer: "public\\assignments\\IF23A1-01\\U001.java",
+      grade: null,
+    },
+    {
+      submission_number: "U002-20251104062613178",
+      assignment_number: "IF23A1-01",
+      student_uid: "U002",
+      answer: "public\\assignments\\IF23A1-01\\U002.java",
+      grade: null,
+    },
+    {
+      submission_number: "U003-20251104062613172",
+      assignment_number: "IF23A1-01",
+      student_uid: "U003",
+      answer: "public\\assignments\\IF23A1-01\\U003.java",
+      grade: null,
+    },
   ];
 
   const databasePath = path.resolve("database");
-  const srcPath = path.join(databasePath, "seeders/_dataset2");
+  const srcPath1 = path.join(databasePath, "seeders/_dataset2");
+  const srcPath2 = path.join(databasePath, "seeders/_dataset3");
 
   const publicPath = path.resolve("public");
-  const destPath = path.join(publicPath, "assignments/CS25C3-01");
+  const destPath1 = path.join(publicPath, "assignments/CS25C3-01");
+  const destPath2 = path.join(publicPath, "assignments/IF23A1-01");
 
-  fs.mkdirSync(destPath, { recursive: true });
+  fs.mkdirSync(destPath1, { recursive: true });
+  fs.mkdirSync(destPath2, { recursive: true });
 
-  const entries = fs.readdirSync(srcPath, { withFileTypes: true });
+  const entries1 = fs.readdirSync(srcPath1, { withFileTypes: true });
+  const entries2 = fs.readdirSync(srcPath2, { withFileTypes: true });
 
-  for (let entry of entries) {
-    const src = path.join(srcPath, entry.name);
-    const dest = path.join(destPath, entry.name);
+  for (let entry of entries1) {
+    const src = path.join(srcPath1, entry.name);
+    const dest = path.join(destPath1, entry.name);
+
+    if (entry.isDirectory()) {
+      fs.mkdirSync(dest, { recursive: true });
+    } else {
+      fs.copyFileSync(src, dest);
+    }
+  }
+
+  for (let entry of entries2) {
+    const src = path.join(srcPath2, entry.name);
+    const dest = path.join(destPath2, entry.name);
 
     if (entry.isDirectory()) {
       fs.mkdirSync(dest, { recursive: true });

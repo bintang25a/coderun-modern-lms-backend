@@ -30,7 +30,7 @@ export default async function AssignmentSeeder() {
       assistant_uid: "U003",
       title: "Tugas 1",
       description: "Kelas king",
-      answer_key: "public\\assignments\\IF23A1-01\\answer_key.c",
+      answer_key: "public\\assignments\\IF23A1-01\\answer_key.java",
       startAt: "2025-10-24T14:30:00.000Z",
       endAt: "2025-10-25T14:30:00.000Z",
       overtime: false,
