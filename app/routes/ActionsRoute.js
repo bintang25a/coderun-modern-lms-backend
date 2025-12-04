@@ -1,11 +1,12 @@
 import express from "express";
-import { run, labelling } from "../controllers/ActionsController.js";
+import { run, labelling, parsing } from "../controllers/ActionsController.js";
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 
 const router = express.Router();
 
 router.use(verifyUser, assistantOnly);
 router.post("/run", run);
-router.post("/grade", labelling);
+router.post("/grade", parsing);
+// router.post("/grade", labelling);
 
 export default router;

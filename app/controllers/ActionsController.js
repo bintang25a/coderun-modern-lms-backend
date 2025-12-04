@@ -8,6 +8,169 @@ import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
 import { Assignment } from "../../database/models/Model.js";
 
+export const parsing = async (req, res) => {
+  const { assignment_number, language } = req.body;
+
+  if (!assignment_number || !language) {
+    return res.status(400).json({
+      success: false,
+      message: "Automatic grading failed, Field cannot empty",
+    });
+  }
+
+  const assignment = await Assignment.findOne({
+    where: { assignment_number },
+    include: [
+      {
+        association: Assignment.associations.submissions,
+        as: "submissions",
+        attributes: ["submission_number", "student_uid", "grade"],
+      },
+    ],
+  });
+
+  if (!assignment) {
+    return res.status(404).json({
+      success: false,
+      message: "Automatic grading failed, Assignment not found",
+    });
+  }
+
+  // Folder output CSV
+  const outputDir = path.resolve("temp");
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  // Parser setup
+  const parser = new Parser();
+  if (language === "c") parser.setLanguage(C);
+  else if (language === "cpp") parser.setLanguage(CPP);
+  else if (language === "java") parser.setLanguage(Java);
+  else if (language === "python") parser.setLanguage(Python);
+  else {
+    return res.status(400).json({
+      success: false,
+      message: "Automatic grading failed, Unsupported language",
+    });
+  }
+
+  // Count nodes
+  const countNodeTypes = (node, counter) => {
+    const type = node.type;
+    counter[type] = (counter[type] || 0) + 1;
+    for (let i = 0; i < node.childCount; i++) {
+      countNodeTypes(node.child(i), counter);
+    }
+  };
+
+  let labelError = 0;
+  let csvRows = [];
+  let nodeKeys = new Set();
+  let results = [];
+
+  const parseFile = async (filePath, keyPath, row_id) => {
+    const ext = path.extname(filePath);
+
+    if (ext !== `.${language}`) {
+      labelError++;
+      return { row_id, message: "Wrong language" };
+    }
+
+    const keyCode = fs.readFileSync(keyPath, "utf8");
+    const keyTree = parser.parse(keyCode);
+
+    const code = fs.readFileSync(filePath, "utf8");
+    const tree = parser.parse(code);
+
+    const keyCounter = {};
+    countNodeTypes(keyTree.rootNode, keyCounter);
+
+    const counter = {};
+    countNodeTypes(tree.rootNode, counter);
+
+    const allKeys = new Set([
+      ...Object.keys(keyCounter),
+      ...Object.keys(counter),
+    ]);
+
+    let score = 0;
+    let T = 0;
+
+    for (const key of allKeys) {
+      const keyNode = keyCounter[key] || 0;
+      const answerNode = counter[key] || 0;
+
+      score += Math.min(keyNode, answerNode);
+      T += keyNode;
+    }
+
+    score = (score / T) * 100;
+
+    return {
+      counter,
+      score: Number(score.toFixed(2)),
+      row_id,
+    };
+  };
+
+  const datasetDir = path.resolve(
+    `database/datasets/${language.toUpperCase()}`
+  );
+  const datasetFiles = fs.readdirSync(datasetDir);
+  const keyFile = assignment.answer_key;
+  let row_id = 1;
+
+  for (const file of datasetFiles) {
+    const ext = path.extname(file);
+    if (ext !== `.${language}`) continue;
+
+    const filePath = path.join(datasetDir, file);
+
+    const result = await parseFile(filePath, keyFile, row_id++);
+
+    if (result?.message) continue;
+
+    results.push(result);
+
+    Object.keys(result.counter).forEach((k) => nodeKeys.add(k));
+  }
+
+  for (const result of results) {
+    const row = [result.row_id, result.score];
+
+    Array.from(nodeKeys).forEach((key) => {
+      row.push(result.counter[key] || 0);
+    });
+
+    csvRows.push(row);
+  }
+
+  const csvHeader = ["row_id", "score", ...Array.from(nodeKeys)];
+  const csvPath = path.join(outputDir, `DATASET_${assignment_number}.csv`);
+  const delimiter = " ";
+
+  function escape(value) {
+    if (value.includes(",")) {
+      return "coma";
+    }
+    return value;
+  }
+
+  const header = csvHeader.map(escape).join(delimiter);
+  const rows = csvRows.map((row) =>
+    row.map((v) => escape(String(v))).join(delimiter)
+  );
+
+  fs.writeFileSync(csvPath, [header, ...rows].join("\n"));
+
+  return res.status(200).json({
+    success: true,
+    message: `Automatic grading successfully, ${labelError} file error`,
+    csv: csvPath,
+  });
+};
+
 export const labelling = async (req, res) => {
   const { assignment_number, language } = req.body;
 
@@ -127,9 +290,7 @@ export const labelling = async (req, res) => {
     return {
       submission_number,
       score: Number(score.toFixed(2)),
-      S,
-      counter,
-      keyCounter,
+      ...counter,
     };
   };
 

@@ -99,8 +99,8 @@ export default async function SubmissionSeeder() {
   ];
 
   const databasePath = path.resolve("database");
-  const srcPath1 = path.join(databasePath, "seeders/_dataset2");
-  const srcPath2 = path.join(databasePath, "seeders/_dataset3");
+  const srcPath1 = path.join(databasePath, "../datasets/_dataset2");
+  const srcPath2 = path.join(databasePath, "../datasets/_dataset3");
 
   const publicPath = path.resolve("public");
   const destPath1 = path.join(publicPath, "assignments/CS25C3-01");
