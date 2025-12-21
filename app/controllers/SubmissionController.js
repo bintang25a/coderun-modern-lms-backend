@@ -54,12 +54,17 @@ export const show = async (req, res) => {
       });
     }
 
-    const code = fs.readFileSync(submission.answer, "utf-8");
+    const code = fs.existsSync(submission.answer)
+      ? fs.readFileSync(submission.answer, "utf-8")
+      : null;
 
     res.status(200).json({
       success: true,
       message: "Display submission successfully",
-      data: { ...submission.toJSON(), code },
+      data: {
+        ...submission.toJSON(),
+        code,
+      },
     });
   } catch (error) {
     console.log(error.message);

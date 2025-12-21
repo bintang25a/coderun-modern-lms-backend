@@ -1,11 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { spawn, exec } from "child_process";
+import { spawn, execSync } from "child_process";
 import Parser from "tree-sitter";
 import C from "tree-sitter-c";
 import CPP from "tree-sitter-cpp";
 import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
+import * as pty from "node-pty";
 import { Assignment } from "../../database/models/Model.js";
 
 export const autoGrade = async (req, res) => {
@@ -596,7 +597,132 @@ export const countSBCAM = async (req, res) => {
   });
 };
 
-export const run = async (req, res) => {
+export const run1 = async (req, res) => {
+  const { language, codePath, input = "" } = req.body;
+  const uid = req.uid;
+
+  if (!language || !codePath || !uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Running code failed, field cannot be empty",
+    });
+  }
+
+  const projectRoot = process.cwd();
+  const absoluteCodePath = path.resolve(
+    projectRoot,
+    codePath.replace(/\\/g, "/")
+  );
+
+  if (!fs.existsSync(absoluteCodePath)) {
+    return res.status(404).json({
+      success: false,
+      message: "Source code not found",
+    });
+  }
+
+  const tempDir = path.resolve("temp", uid);
+  fs.mkdirSync(tempDir, { recursive: true });
+
+  let filename, compileRunCmd;
+
+  switch (language) {
+    case "c":
+      filename = "main.c";
+      compileRunCmd = "gcc main.c -o app && stdbuf -o0 ./app";
+      break;
+
+    case "cpp":
+      filename = "main.cpp";
+      compileRunCmd = "g++ main.cpp -o app && stdbuf -o0 ./app";
+      break;
+
+    case "java":
+      filename = "Main.java";
+      compileRunCmd = "javac Main.java && stdbuf -o0 java Main";
+      break;
+
+    default:
+      return res.status(400).json({
+        success: false,
+        message: "Language unsupported",
+      });
+  }
+
+  const codeContent = fs.readFileSync(absoluteCodePath, "utf8");
+  if (!codeContent.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "Source code is empty",
+    });
+  }
+
+  fs.writeFileSync(path.join(absoluteTempPathBackend, filename), codeContent);
+
+  const dockerArgs = [
+    "run",
+    "--rm",
+    "-i",
+    "--cpus=1",
+    "--memory=256m",
+    "--pids-limit=64",
+    "--network=none",
+    "-v",
+    `${absoluteTempPathBackend}:/app`,
+    "-w",
+    "/app",
+    "lms-code-sandbox",
+    "bash",
+    "-c",
+    compileRunCmd,
+  ];
+
+  const proc = spawn("docker", dockerArgs, {
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  let stdout = "";
+  let stderr = "";
+
+  proc.stdout.on("data", (d) => (stdout += d.toString()));
+  proc.stderr.on("data", (d) => (stderr += d.toString()));
+
+  if (input && input.trim().length > 0) {
+    proc.stdin.write(input.endsWith("\n") ? input : input + "\n");
+  }
+
+  const timeout = setTimeout(() => {
+    proc.kill("SIGKILL");
+  }, 3000);
+
+  proc.on("close", () => {
+    clearTimeout(timeout);
+
+    let finalOutput = "";
+    const prompts = stdout.split(":");
+    const inputs = input.trim().split(/\s+/);
+
+    for (let i = 0; i < prompts.length; i++) {
+      finalOutput += prompts[i];
+
+      if (i < prompts.length - 1) {
+        finalOutput += ": ";
+
+        if (inputs[i]) {
+          finalOutput += "" + inputs[i] + "\n";
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      output: finalOutput.trim(),
+      error: stderr.trim(),
+    });
+  });
+};
+
+export const run2 = async (req, res) => {
   const { language, codePath, input = "" } = req.body;
   const uid = req.uid;
 
@@ -710,6 +836,172 @@ export const run = async (req, res) => {
         output: output.trim(),
         exitCode: code,
       });
+    });
+  });
+};
+
+export const run = async (req, res) => {
+  const { language, codePath, input = "", timeLimit = 5000 } = req.body;
+  const uid = req.uid;
+
+  if (!language || !codePath || !uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Running code failed, field cannot be empty",
+    });
+  }
+
+  const projectRoot = process.cwd();
+  const hostProjectRoot = process.env.HOST_PROJECT_PATH;
+  const relativeTempPath = path.join("temp", uid);
+  const backendTempDir = path.resolve(projectRoot, relativeTempPath);
+  const hostTempDir = path.join(hostProjectRoot, relativeTempPath);
+
+  execSync(`rm -rf ${backendTempDir}`);
+  execSync(`mkdir -p ${backendTempDir}`);
+  // Beri izin penuh biar bisa ditulis file
+  execSync(`chmod 777 ${backendTempDir}`);
+
+  if (!fs.existsSync(backendTempDir)) {
+    console.log("KONTOLODON MEGALOODON");
+    fs.mkdirSync(backendTempDir, { recursive: true, mode: 0o777 });
+  }
+
+  const cleanCodePath = codePath.replace(/\\/g, "/");
+  const absoluteCodePath = path.resolve(projectRoot, cleanCodePath);
+
+  if (!fs.existsSync(absoluteCodePath)) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Source code not found" });
+  }
+
+  const codeContent = fs.readFileSync(absoluteCodePath, "utf8");
+  if (!codeContent.trim()) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Source code is empty" });
+  }
+
+  let filename, compileRunCmd;
+
+  switch (language) {
+    case "c":
+      filename = "main.c";
+      compileRunCmd = "gcc main.c -o app && stdbuf -i0 -o0 -e0 ./app";
+      break;
+    case "cpp":
+      filename = "main.cpp";
+      compileRunCmd = "g++ main.cpp -o app && stdbuf -i0 -o0 -e0 ./app";
+      break;
+    case "java":
+      filename = "Main.java";
+      compileRunCmd = "javac Main.java && stdbuf -i0 -o0 -e0 java Main";
+      break;
+    case "python":
+      filename = "main.py";
+      compileRunCmd = "python3 -u main.py";
+      break;
+    default:
+      return res
+        .status(400)
+        .json({ success: false, message: "Language unsupported" });
+  }
+
+  const finalFilePath = path.join(backendTempDir, filename);
+  console.log(`APAAN NIH ${backendTempDir}`);
+  fs.writeFileSync(finalFilePath, codeContent);
+
+  const dockerArgs = [
+    "run",
+    "--rm",
+    "-i",
+    "-t",
+    "--cpus=1",
+    "--memory=256m",
+    "--network=none",
+    "-v",
+    `${finalFilePath}:/app`,
+    "-w",
+    "/app",
+    "lms-code-sandbox",
+    "bash",
+    "-c",
+    compileRunCmd,
+  ];
+
+  const ptyProcess = pty.spawn("docker", dockerArgs, {
+    name: "xterm-color",
+    cols: 80,
+    rows: 30,
+    cwd: process.cwd(),
+    env: process.env,
+  });
+
+  let output = "";
+  let isFinished = false;
+
+  const formatOutput = (raw) => {
+    return raw
+      .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
+      .replace(/\r\n/g, "\n")
+      .trim();
+  };
+
+  ptyProcess.onData((data) => {
+    output += data;
+  });
+
+  if (input) {
+    const inputLines = input.split(/\s+/);
+
+    let currentDelay = 800;
+
+    inputLines.forEach((line) => {
+      setTimeout(() => {
+        if (!isFinished) {
+          ptyProcess.write(`${line}\r`);
+        }
+      }, currentDelay);
+
+      currentDelay += 200;
+    });
+  }
+
+  const timeout = setTimeout(() => {
+    if (!isFinished) {
+      isFinished = true;
+
+      const currentOutput = formatOutput(output);
+
+      try {
+        ptyProcess.kill();
+      } catch (e) {}
+
+      return res.status(200).json({
+        success: true,
+        output: currentOutput,
+        error: "Execution Timed Out (Possible missing input or infinite loop)",
+        isTimeout: true,
+      });
+    }
+  }, Number(timeLimit));
+
+  ptyProcess.onExit(({ exitCode }) => {
+    if (isFinished) return;
+
+    isFinished = true;
+    clearTimeout(timeout);
+
+    const cleanOutput = formatOutput(output);
+
+    return res.status(200).json({
+      success: true,
+      output: cleanOutput,
+      error:
+        exitCode !== 0 && output.toLowerCase().includes("error")
+          ? "Execution/Compile Error"
+          : "",
     });
   });
 };
