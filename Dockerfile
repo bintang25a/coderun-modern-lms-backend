@@ -1,35 +1,20 @@
-FROM node:22-bullseye
+FROM coderun-modern-lms-backend
 
-# 1. Install alat kompilasi untuk node-pty
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    build-essential \
-    curl \
-    gnupg \
-    lsb-release
+# ===== NORMAL BUILD & RUN =====
+# docker compose down -v
+# docker system prune -f
+# docker compose build --no-cache backend
+# docker compose up -d
+# docker build -t coderun-modern-lms-sandbox -f docker/Dockerfile.sandbox .
 
-# 2. Install Docker CLI (Memperbaiki error tee/directory)
-RUN mkdir -p /etc/apt/keyrings && \
-    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list && \
-    apt-get update && apt-get install -y docker-ce-cli
+# ===== JIKA KONFLIK =====
+# docker compose down --remove-orphans
+# docker rm -f coderun-modern-lms-mysql
+# docker volume rm backend_coderun-modern-lms-mysql
 
-RUN npm install -g nodemon
+# ===== MIGRATE & SEEDER DATABASE =====
+# docker exec -it coderun-modern-lms-backend npm run migrate
+# docker exec -it coderun-modern-lms-backend npm run seeder
 
-WORKDIR /app
-
-# 3. Handle dependencies
-# Kita copy package.json dulu agar npm install di-cache oleh Docker
-COPY package*.json ./
-RUN npm install
-
-# 4. Copy source code sisanya
-COPY . .
-
-RUN mkdir -p /app/temp && chmod -R 777 /app/temp
-
-EXPOSE 5000
-
-CMD ["nodemon", "-L", "index.js"]
+# ===== MASUK MYSQL =====
+# docker exec -it coderun-modern-lms-mysql mysql -u root -p

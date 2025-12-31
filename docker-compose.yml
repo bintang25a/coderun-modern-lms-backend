@@ -1,8 +1,9 @@
+version: "3.9"
+
 services:
-  # 1. Database Service
   db:
     image: mysql:8.0
-    container_name: lms-mysql
+    container_name: coderun-modern-lms-mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
@@ -10,44 +11,33 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - coderun-modern-lms-mysql:/var/lib/mysql
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "root",
-          "-p${DB_PASSWORD}",
-        ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
-      timeout: 5s
       retries: 10
 
-  # 3. Main Backend Service
-  lms-backend:
-    build: .
-    container_name: lms-backend
-    user: root
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: coderun-modern-lms-backend
     restart: always
-    environment:
-      - HOST_PROJECT_PATH=${PWD}
+    user: root
     depends_on:
       db:
         condition: service_healthy
-    command: nodemon -L index.js
+    env_file:
+      - .env
     ports:
       - "5000:5000"
     volumes:
       - .:/app
+      - ./public:/app/public
       - /app/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./temp:/app/temp
-    env_file:
-      - .env
+      - ./app/temp:/app/app/temp
+    command: nodemon -L index.js
 
 volumes:
-  mysql_data:
+  coderun-modern-lms-mysql:

@@ -851,38 +851,46 @@ export const run = async (req, res) => {
     });
   }
 
-  const projectRoot = process.cwd();
+  /** ===============================
+   * PATH RESOLUTION (INSIDE DOCKER)
+   * =============================== */
   const hostProjectRoot = process.env.HOST_PROJECT_PATH;
-  const relativeTempPath = path.join("temp", uid);
-  const backendTempDir = path.resolve(projectRoot, relativeTempPath);
-  const hostTempDir = path.join(hostProjectRoot, relativeTempPath);
 
-  execSync(`rm -rf ${backendTempDir}`);
-  execSync(`mkdir -p ${backendTempDir}`);
-  // Beri izin penuh biar bisa ditulis file
-  execSync(`chmod 777 ${backendTempDir}`);
-
-  if (!fs.existsSync(backendTempDir)) {
-    console.log("KONTOLODON MEGALOODON");
-    fs.mkdirSync(backendTempDir, { recursive: true, mode: 0o777 });
-  }
-
-  const cleanCodePath = codePath.replace(/\\/g, "/");
-  const absoluteCodePath = path.resolve(projectRoot, cleanCodePath);
+  const projectRoot = process.cwd();
+  const normalizedPath = codePath.replace(/\\/g, "/");
+  const absoluteCodePath = path.resolve(projectRoot, normalizedPath);
 
   if (!fs.existsSync(absoluteCodePath)) {
-    return res
-      .status(404)
-      .json({ success: false, message: "Source code not found" });
+    return res.status(404).json({
+      success: false,
+      message: `Running code failed, Source code not found`,
+    });
   }
 
   const codeContent = fs.readFileSync(absoluteCodePath, "utf8");
   if (!codeContent.trim()) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Source code is empty" });
+    return res.status(400).json({
+      success: false,
+      message: "Running code failed, Source code is empty",
+    });
   }
 
+  /** ===============================
+   * TEMP DIRECTORY
+   * =============================== */
+  const tempDir = path.resolve(projectRoot, "temp", uid);
+  const hostTempDir = path
+    .join(hostProjectRoot, "temp", uid)
+    .replace(/\\/g, "/");
+
+  if (fs.existsSync(tempDir)) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+  fs.mkdirSync(tempDir, { recursive: true });
+
+  /** ===============================
+   * LANGUAGE CONFIG
+   * =============================== */
   let filename, compileRunCmd;
 
   switch (language) {
@@ -908,23 +916,27 @@ export const run = async (req, res) => {
         .json({ success: false, message: "Language unsupported" });
   }
 
-  const finalFilePath = path.join(backendTempDir, filename);
-  console.log(`APAAN NIH ${backendTempDir}`);
-  fs.writeFileSync(finalFilePath, codeContent);
+  const sourcePath = path.join(tempDir, filename);
+  fs.writeFileSync(sourcePath, codeContent);
 
+  /** ===============================
+   * DOCKER SANDBOX RUN
+   * =============================== */
   const dockerArgs = [
     "run",
     "--rm",
     "-i",
     "-t",
+    "--user",
+    "root",
     "--cpus=1",
-    "--memory=256m",
+    "--memory=512m",
     "--network=none",
     "-v",
-    `${finalFilePath}:/app`,
+    `${hostTempDir}:/app`,
     "-w",
     "/app",
-    "lms-code-sandbox",
+    "coderun-modern-lms-sandbox",
     "bash",
     "-c",
     compileRunCmd,
@@ -948,25 +960,39 @@ export const run = async (req, res) => {
       .trim();
   };
 
+  let inputSent = false;
+
   ptyProcess.onData((data) => {
     output += data;
+
+    // Begitu program ngeluarin data (misal: "Masukan nilai..."),
+    // kita langsung tembak inputnya di sini.
+    if (input && !inputSent) {
+      inputSent = true;
+
+      // Pecah input berdasarkan spasi, gabung jadi newline biar masuk ke tiap scanf
+      const allInputs = input.split(/\s+/).join("\n") + "\n";
+
+      // Tembak langsung ke PTY
+      ptyProcess.write(allInputs);
+    }
   });
 
-  if (input) {
-    const inputLines = input.split(/\s+/);
+  // if (input) {
+  //   const inputLines = input.split(/\s+/);
 
-    let currentDelay = 800;
+  //   let currentDelay = 800;
 
-    inputLines.forEach((line) => {
-      setTimeout(() => {
-        if (!isFinished) {
-          ptyProcess.write(`${line}\r`);
-        }
-      }, currentDelay);
+  //   inputLines.forEach((line) => {
+  //     setTimeout(() => {
+  //       if (!isFinished) {
+  //         ptyProcess.write(`${line}\r`);
+  //       }
+  //     }, currentDelay);
 
-      currentDelay += 200;
-    });
-  }
+  //     currentDelay += 200;
+  //   });
+  // }
 
   const timeout = setTimeout(() => {
     if (!isFinished) {
@@ -1002,24 +1028,10 @@ export const run = async (req, res) => {
         exitCode !== 0 && output.toLowerCase().includes("error")
           ? "Execution/Compile Error"
           : "",
+      debug: {
+        sourcePath,
+        hostTempDir,
+      },
     });
   });
 };
-
-// function nodeToJSON(node) {
-//   const result = {
-//     type: node.type,
-//     startPosition: node.startPosition,
-//     endPosition: node.endPosition,
-//   };
-
-//   if (node.childCount > 0) {
-//     result.children = [];
-//     for (let i = 0; i < node.childCount; i++) {
-//       result.children.push(nodeToJSON(node.child(i)));
-//     }
-//   } else {
-//     result.text = node.text;
-//   }
-//   return result;
-// }
