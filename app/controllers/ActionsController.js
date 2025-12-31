@@ -851,9 +851,6 @@ export const run = async (req, res) => {
     });
   }
 
-  /** ===============================
-   * PATH RESOLUTION (INSIDE DOCKER)
-   * =============================== */
   const hostProjectRoot = process.env.HOST_PROJECT_PATH;
 
   const projectRoot = process.cwd();
@@ -875,9 +872,6 @@ export const run = async (req, res) => {
     });
   }
 
-  /** ===============================
-   * TEMP DIRECTORY
-   * =============================== */
   const tempDir = path.resolve(projectRoot, "temp", uid);
   const hostTempDir = path
     .join(hostProjectRoot, "temp", uid)
@@ -886,11 +880,9 @@ export const run = async (req, res) => {
   if (fs.existsSync(tempDir)) {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+
   fs.mkdirSync(tempDir, { recursive: true });
 
-  /** ===============================
-   * LANGUAGE CONFIG
-   * =============================== */
   let filename, compileRunCmd;
 
   switch (language) {
@@ -903,25 +895,28 @@ export const run = async (req, res) => {
       compileRunCmd = "g++ main.cpp -o app && stdbuf -i0 -o0 -e0 ./app";
       break;
     case "java":
-      filename = "Main.java";
-      compileRunCmd = "javac Main.java && stdbuf -i0 -o0 -e0 java Main";
+      const classMatch = codeContent.match(
+        /public\s+class\s+([a-zA-Z_$][a-zA-Z\d_$]*)/
+      );
+      const className = classMatch ? classMatch[1] : "Main";
+
+      filename = `${className}.java`;
+      compileRunCmd = `javac ${filename} && exec java ${className}`;
       break;
     case "python":
       filename = "main.py";
       compileRunCmd = "python3 -u main.py";
       break;
     default:
-      return res
-        .status(400)
-        .json({ success: false, message: "Language unsupported" });
+      return res.status(400).json({
+        success: false,
+        message: "Running code failed, Language unsupported",
+      });
   }
 
   const sourcePath = path.join(tempDir, filename);
   fs.writeFileSync(sourcePath, codeContent);
 
-  /** ===============================
-   * DOCKER SANDBOX RUN
-   * =============================== */
   const dockerArgs = [
     "run",
     "--rm",
@@ -960,39 +955,18 @@ export const run = async (req, res) => {
       .trim();
   };
 
-  let inputSent = false;
+  const inputQueue = input ? input.trim().split(/\s+/) : [];
+  let currentIdx = 0;
 
   ptyProcess.onData((data) => {
     output += data;
 
-    // Begitu program ngeluarin data (misal: "Masukan nilai..."),
-    // kita langsung tembak inputnya di sini.
-    if (input && !inputSent) {
-      inputSent = true;
+    if (inputQueue.length > 0 && currentIdx < inputQueue.length) {
+      ptyProcess.write(`${inputQueue[currentIdx]}\r`);
 
-      // Pecah input berdasarkan spasi, gabung jadi newline biar masuk ke tiap scanf
-      const allInputs = input.split(/\s+/).join("\n") + "\n";
-
-      // Tembak langsung ke PTY
-      ptyProcess.write(allInputs);
+      currentIdx++;
     }
   });
-
-  // if (input) {
-  //   const inputLines = input.split(/\s+/);
-
-  //   let currentDelay = 800;
-
-  //   inputLines.forEach((line) => {
-  //     setTimeout(() => {
-  //       if (!isFinished) {
-  //         ptyProcess.write(`${line}\r`);
-  //       }
-  //     }, currentDelay);
-
-  //     currentDelay += 200;
-  //   });
-  // }
 
   const timeout = setTimeout(() => {
     if (!isFinished) {
@@ -1006,8 +980,8 @@ export const run = async (req, res) => {
 
       return res.status(200).json({
         success: true,
+        message: "Running code successfully, Execution Timed Out",
         output: currentOutput,
-        error: "Execution Timed Out (Possible missing input or infinite loop)",
         isTimeout: true,
       });
     }
@@ -1023,15 +997,11 @@ export const run = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      output: cleanOutput,
-      error:
+      message:
         exitCode !== 0 && output.toLowerCase().includes("error")
           ? "Execution/Compile Error"
           : "",
-      debug: {
-        sourcePath,
-        hostTempDir,
-      },
+      output: cleanOutput,
     });
   });
 };
