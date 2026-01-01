@@ -7,5 +7,5 @@ export function calculateScore(key, answer) {
     total += key[k];
   }
 
-  return Number(((score / total) * 100).toFixed(2));
+  return Math.round((score / total) * 100);
 }

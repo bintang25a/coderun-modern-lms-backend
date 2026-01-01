@@ -1,6 +1,6 @@
 import fs from "fs";
 
-export function writeCSV(filePath, header, rows, delimiter = " ") {
+export function writeCSV(filePath, header, rows, delimiter = ",") {
   const sanitizedHeader = header.map((h) => (h === "," ? "coma" : h));
 
   const content = [

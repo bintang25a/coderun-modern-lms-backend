@@ -102,6 +102,7 @@ export const autoGrade = async (req, res) => {
     message: `Automatic grading successfully`,
     dataset: path.join(outputDir, `DATASET_${assignment_number}.csv`),
     answer: path.join(outputDir, `ANSWER_${assignment_number}.csv`),
+    datasetRows,
   });
 };
 

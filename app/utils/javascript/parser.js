@@ -9,7 +9,14 @@ export function parseCode(parser, filePath) {
   const counter = {};
 
   function countNode(node) {
-    counter[node.type] = (counter[node.type] || 0) + 1;
+    const type = node.type;
+
+    if (type.includes("comment")) {
+      return;
+    }
+
+    counter[type] = (counter[type] || 0) + 1;
+
     for (let i = 0; i < node.childCount; i++) {
       countNode(node.child(i));
     }

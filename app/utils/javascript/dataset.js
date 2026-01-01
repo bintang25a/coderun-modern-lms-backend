@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { parseCode } from "./parser.js";
 import { calculateScore } from "./score.js";
-import { extendSchema } from "./schema.js";
+import { deduplicateDataset, extendSchema } from "./schema.js";
 
 const BASE_DIR = process.cwd();
 
@@ -46,5 +46,5 @@ export function buildDataset({ assignment, parser, language, schemaSet }) {
     });
   }
 
-  return rows;
+  return deduplicateDataset(rows);
 }
