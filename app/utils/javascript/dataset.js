@@ -39,10 +39,13 @@ export function buildDataset({ assignment, parser, language, schemaSet }) {
 
     extendSchema(schemaSet, counter);
 
+    const filePath = path.join(datasetDir, file);
+
     rows.push({
       row_id: rowId++,
       score: calculateScore(keyCounter, counter),
       counter,
+      filePath,
     });
   }
 

@@ -1,47 +1,41 @@
-#include <stdio.h>
+#include <stdio.h> 
 
-int main() {
-    int baris, kolom;
-	printf("===============Program Menjumlahkan Diagonal Matriks===============\n\n");
-    printf("Masukkan jumlah baris matriks: "); scanf("%d", &baris);
-    printf("Masukkan jumlah kolom matriks: "); scanf("%d", &kolom);
-
-    int matriks[baris][kolom], i, j;
-	int diagonal_utama = 0, diagonal_sekunder = 0;
-
-    printf("\nMasukkan elemen matriks:\n");
-    for (i = 0; i < baris; i++) {
-        for (j = 0; j < kolom; j++) {
-            printf("Elemen [%d][%d]: ", i, j); scanf("%d", &matriks[i][j]);
-        }
-    }
-
-    printf("\nMatriks yang dimasukkan:\n");
-    for (i = 0; i < baris; i++) {
-        for (j = 0; j < kolom; j++) {
-            printf("%d\t", matriks[i][j]);
-        }
-        printf("\n");
-    }
-
-    int min_elemen;
-		if (baris < kolom) {
-    		min_elemen = baris;
-		}else {
-    		min_elemen = kolom;
+	int n, m, i, j, D1=0, D2=0;
+	int a[10][10];
+	
+void PenjumlahanDiagonalArray (int n, int m, int a[10][10]) {
+	printf ("\nMatriks A :\n");
+	for (i=0; i<n; i++) {
+		printf ("|\t");
+		for (j=0; j<m; j++){
+			printf ("%d\t", a[i][j]);
+		}
+		printf ("|\n\n");
+	}	
+ 	if ( n==1 || m==1 || m!=n) {
+ 		printf ("\nDiagonal tidak tersedia");
+	 }
+	else {
+		for (i=0; i<n; i++) {
+            D1 = D1 + a[i][i];
+			D2 = D2 + a[i][n-1-i];	
+		}
+	printf ("\nHasil penjumlahan diagonal utama dari matriks A = %d ", D1);
+	printf ("\nHasil penjumlahan diagonal sekunder dari matriks A = %d ", D2);	
 	}
-    for (i = 0; i < min_elemen; i++) {
-        diagonal_utama += matriks[i][i];
-    }
-
-    for (i = 0; i < baris && i < kolom; i++) {
-        diagonal_sekunder += matriks[i][kolom - 1 - i];
-    }
-
-  
-    printf("\nJumlah diagonal utama: %d\n", diagonal_utama);
-    printf("Jumlah diagonal sekunder: %d\n", diagonal_sekunder);
- 	printf("Total kedua diagonal: %d\n",diagonal_utama + diagonal_sekunder);
-
-    return 0;
+	printf ("\n");
 }
+
+int main () {
+	printf ("Masukan banyak baris matriks = ");	scanf ("%d", &n);
+	printf ("Masukan banyak kolom matriks = "); scanf ("%d", &m);
+	printf ("\nMasukan nilai matriks : A\n");
+	for (i=0; i<n; i++) {
+		for (j=0; j<m; j++) {
+			printf ("\tMatriks A[%d][%d] = ", i+1, j+1);
+			scanf ("%d", &a[i][j]);
+		}
+	}
+	PenjumlahanDiagonalArray (n, m, a);
+}
+

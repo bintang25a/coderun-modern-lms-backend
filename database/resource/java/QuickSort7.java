@@ -1,5 +1,4 @@
 import java.util.Scanner;
-
 public class TugasLomuto {
 
      public static int lomutoPartition(int[] arr, int low, int high) {

@@ -1,50 +1,68 @@
-public class perkalianMetriks {
+public class Array2D_KodePerkalian_Array {
 
-public static int[][] perkalianMetriks(int[][] A, int B[][]) throws Exception {
-    if(A.length == 0 || B.length == 0 || A[0].length == 0 || B[0].length == 0) {
-            throw new Exception("Matriks A atau B tidak boleh kosong!");
-        } else if (A[0].length != B.length) {
-            throw new Exception("A dan B tidak bisa dikalikan karena dimensi tidak cocok");
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        // TODO code application logic here
+    }
+    
+}
+public class MatrixMultiplication 
+    public static void main(String[] args) {
+        // Mendefinisikan dua array 2 dimensi
+        int[][] matrixA = {
+            {1, 2, 3},
+            {4, 5, 6}
+        };
+
+        int[][] matrixB = {
+            {7, 8},
+            {9, 10},
+            {11, 12}
+        };
+
+        // Menghitung hasil perkalian
+        int[][] result = multiplyMatrices(matrixA, matrixB);
+
+        // Menampilkan hasil
+        System.out.println("Hasil Perkalian Matriks:");
+        printMatrix(result);
+    }
+
+    // Metode untuk mengalikan dua matriks
+    public static int[][] multiplyMatrices(int[][] a, int[][] b) {
+        int rowsA = a.length; // Jumlah baris matriks A
+        int colsA = a[0].length; // Jumlah kolom matriks A
+        int rowsB = b.length; // Jumlah baris matriks B
+        int colsB = b[0].length; // Jumlah kolom matriks B
+
+        // Memastikan bahwa kolom A sama dengan baris B
+        if (colsA != rowsB) {
+            throw new IllegalArgumentException("Jumlah kolom matriks A harus sama dengan jumlah baris matriks B.");
         }
 
-        int[][] C = new int[A.length][B[0].length]; 
-        for (int i = 0; i < A.length; i++) {
-            for (int j = 0; j < B[0].length; j++) {
-                C[i][j] = 0;
-                for (int k = 0; k < A[0].length; k++) {
-                    C[i][j] += A[i][k] * B[k][j];
+        // Membuat matriks hasil dengan ukuran yang sesuai
+        int[][] result = new int[rowsA][colsB];
+
+        // Melakukan perkalian matriks
+        for (int i = 0; i < rowsA; i++) {
+            for (int j = 0; j < colsB; j++) {
+                for (int k = 0; k < colsA; k++) {
+                    result[i][j] += a[i][k] * b[k][j];
                 }
             }
         }
 
-        return C;
+        return result;
     }
 
-  public static void cetakArray2D(int[][] A) {
-        for (int i = 0; i < A.length; i++) { // Baris
-            for (int j = 0; j < A[i].length; j++) { // Kolom
-                System.out.print(A[i][j] + " ");
+    // Metode untuk mencetak matriks
+    public static void printMatrix(int[][] matrix) {
+        for (int[] row : matrix) {
+            for (int value : row) {
+                System.out.print(value + " ");
             }
-            System.out.println(" ");
+            System.out.println();
         }
     }
-
-    public static void main(String[] args) {
-        int A[][] = {{4, 3, 1}, {2, 6, 5}};
-        int B[][] = {{2, 5, 4, 6}, {8, 2, 7, 0}, {7, 1, 3, 9}};
-        
-        cetakArray2D(A);
-        System.out.println(" ");
-        cetakArray2D(B);
-        System.out.println(" ");
-
-        try {
-        int C[][] = perkalianMetriks(A, B);
-        cetakArray2D(C);
-        
-    } 
-        catch (Exception ex) {
-        System.err.println(ex.toString());
-        }
-    }
-}

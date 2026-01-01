@@ -1,46 +1,66 @@
 #include <stdio.h>
-#include <stdlib.h>
 
-int main() {
-    int rows, cols;
-    printf("Masukkan jumlah baris: ");
-    scanf("%d", &rows);
-    printf("Masukkan jumlah kolom: ");
-    scanf("%d", &cols);
+int main(void) {
 
-    int **matrix = (int **)malloc(rows * sizeof(int *));
-    for (int i = 0; i < rows; i++) {
-        matrix[i] = (int *)malloc(cols * sizeof(int));
+  short x[8], total = 0, matrix_a[3][3], matrix_b[3][3], matrix_c[3][3];
+  float avg;
+
+  printf("######################\n");
+  printf("#      Challange     #\n");
+  printf("######################\n\n");
+
+  printf("Average value for the given array of 8");
+  printf("\n--------------------\n");
+
+  for (size_t i = 0; i < 8; i++) {
+    printf("The x[%d] value: ", i);
+    scanf("%d", &x[i]);
+    total += x[i];
+  }
+
+  avg = (float)total / 8;
+
+  printf("Average value is: %.3f\n", avg);
+
+  printf("\n--------------------\n");
+  printf("Addition two matrixs\n\n");
+
+  for (size_t i = 0; i <= 2; i++) {
+    for (size_t j = 0; j < 3; j++) {
+      printf("A[%d][%d]: ", i, j);
+      scanf("%d", &matrix_a[i][j]);
+      printf("B[%d][%d]: ", i, j);
+      scanf("%d", &matrix_b[i][j]);
+    }
+  }
+
+  printf("\n");
+
+  for (size_t i = 0; i < 3; i++) {
+    for (size_t j = 0; j < 3; j++) {
+      matrix_c[i][j] = matrix_a[i][j] + matrix_b[i][j];
+      printf("%d ", matrix_c[i][j]);
+    }
+    printf("\n");
+  }
+
+  printf("\n");
+
+  printf("Matrix 3x3 with diagonal one");
+  printf("\n--------------------\n");
+
+  short r[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+
+  for (size_t i = 0; i < 3; i++) {
+
+    for (size_t j = 0; j < 3; j++) {
+      if ((j == 0 && i == 0) || (j == 1 && i == 1) || (j == 2 && i == 2)) {
+        printf("1 ");
+      } else {
+        printf("%d ", r[i][j]);
+      }
     }
 
-    printf("Masukkan elemen matriks:\n");
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            printf("Elemen [%d][%d]: ", i, j);
-            scanf("%d", &matrix[i][j]);
-        }
-    }
-
-    int sum_main_diag = 0;
-    int sum_sec_diag = 0;
-
-    for (int i = 0; i < rows; i++) {
-        if (i < cols) {
-            sum_main_diag += matrix[i][i];
-        }
-        int sec_diag_col = cols - 1 - i;
-        if (sec_diag_col >= 0 && sec_diag_col < cols) {
-            sum_sec_diag += matrix[i][sec_diag_col];
-        }
-    }
-
-    printf("Jumlah elemen diagonal utama: %d\n", sum_main_diag);
-    printf("Jumlah elemen diagonal sekunder: %d\n", sum_sec_diag);
-
-    for (int i = 0; i < rows; i++) {
-        free(matrix[i]);
-    }
-    free(matrix);
-
-    return 0;
+    printf("\n");
+  }
 }

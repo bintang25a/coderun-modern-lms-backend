@@ -1,54 +1,69 @@
 import java.util.Arrays;
 
-public class countingSort {
-    public static void main(String[] args) {
-        int[] array = {4, 2, 2, 8, 3, 3, 1};
-        System.out.println("Array sebelum diurutkan: " + Arrays.toString(array));
-        
-        countingSort(array);
-        
-        System.out.println("Array setelah diurutkan: " + Arrays.toString(array));
+public class CountingSort {
+
+    // Metode untuk menemukan elemen terbesar dalam array
+    static int findGreatestElement(int[] myArray) {
+        int maxVal = Integer.MIN_VALUE;
+        for (int val : myArray) {
+            if (maxVal < val) {
+                maxVal = val;
+            }
+        }
+        return maxVal;
     }
 
-    public static void countingSort(int[] array) {
-        // Mencari nilai maksimum dalam array
-        int max = Arrays.stream(array).max().getAsInt();
-        
-        // Membuat array counting
-        int[] count = new int[max + 1];
-        
-        // Menghitung frekuensi setiap elemen
-        System.out.println("Menghitung frekuensi setiap elemen:");
-        for (int num : array) {
-            count[num]++;
-            System.out.println("Elemen: " + num + ", Count: " + Arrays.toString(count));
+    // Metode untuk melakukan counting sort
+    static int[] countingSort(int[] A) {
+        int n = A.length;
+        int k = findGreatestElement(A);  // Temukan elemen terbesar
+        int[] B = new int[n];            // Array untuk hasil
+        int[] C = new int[k + 1];        // Array untuk menghitung frekuensi
+
+        // Langkah 1: Inisialisasi C dengan 0
+        System.out.println("Jumlah kolom yang dibuat = " + (k + 1));
+        System.out.println("C = " + Arrays.toString(C));
+
+        // Langkah 2: Hitung frekuensi setiap elemen dalam array A
+        for (int j = 0; j < n; j++) {
+            C[A[j]]++;
+            System.out.println("C = " + Arrays.toString(C));
         }
-        
-        // Menampilkan array count setelah penghitungan
-        System.out.println("Array frekuensi (count) setelah penghitungan: " + Arrays.toString(count));
-        
-        // Mengubah array count menjadi array posisi
-        System.out.println("Mengubah array count menjadi posisi:");
-        for (int i = 1; i <= max; i++) {
-            count[i] += count[i - 1];
-            System.out.println("Count[" + i + "] = " + count[i]);
+
+        // Langkah 3: Update C sehingga C[i] berisi posisi elemen yang sesuai
+        for (int i = 1; i < C.length; i++) {
+            C[i] += C[i - 1];
+            System.out.println("C = " + Arrays.toString(C));
         }
-        
-        // Menampilkan array count setelah pengubahan posisi
-        System.out.println("Array posisi (count) setelah pengubahan: " + Arrays.toString(count));
-        
-        // Array output untuk menyimpan hasil pengurutan
-        int[] output = new int[array.length];
-        
-        // Membangun array output
-        System.out.println("Membangun array output:");
-        for (int i = array.length - 1; i >= 0; i--) {
-            output[count[array[i]] - 1] = array[i];
-            count[array[i]]--;
-            System.out.println("Menempatkan " + array[i] + " pada output[" + (count[array[i]]) + "]");
+
+        // Langkah 4: Bangun array B berdasarkan array C
+        for (int j = n - 1; j >= 0; j--) {
+            int element = A[j];
+            int indexInB = C[element] - 1;  // Hitung indeks untuk elemen A[j] pada array B
+            B[indexInB] = element;
+            C[element]--;  // Decrement posisi yang tersedia untuk elemen tersebut
+
+            // Output per langkah
+            System.out.println ();
+            System.out.println("A = " + Arrays.toString(A) + " <---" + element);
+            System.out.println("C = " + Arrays.toString(C));
+            System.out.println("Indeks = " + (C[element]) + " - 1 = " + indexInB);
+            System.out.println("B = " + Arrays.toString(B));
         }
-        
-        // Menyalin array output ke array asli
-        System.arraycopy(output, 0, array, 0, array.length);
+
+        return B;
+    }
+
+    public static void main(String[] args) {
+        // Array yang akan diurutkan
+        int[] data = {6, 4, 2, 1, 8};
+
+        // Tampilkan array sebelum sorting
+        System.out.println("Array acak = " + Arrays.toString(data) + "\n");
+
+        // Proses counting sort dan tampilkan hasilnya
+        int[] sortedData = countingSort(data);
+        System.out.println("\nArray terurut = ");
+        System.out.println(Arrays.toString(sortedData));
     }
 }

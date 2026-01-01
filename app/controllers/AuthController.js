@@ -1,6 +1,8 @@
 import { User, Token } from "../../database/models/Model.js";
 import bcrypt from "bcrypt";
+import path from "path";
 import jwt from "jsonwebtoken";
+import fs from "fs";
 
 export const login = async (req, res) => {
   const { uid, password, role } = req.body;
@@ -66,6 +68,12 @@ export const login = async (req, res) => {
     token,
     expiredAt: new Date(exp),
   });
+
+  const tempDir = path.join(process.cwd(), "temp", user.uid);
+
+  if (fs.existsSync(tempDir)) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 
   return res.status(200).json({
     success: true,

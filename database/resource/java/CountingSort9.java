@@ -1,58 +1,43 @@
-import java.util.Scanner;
 import java.util.Arrays;
-public class CountSorting {
-
-    public static int findgreeter(int[] Arrayku){
-        int maks_val = Integer.MIN_VALUE;
-        for(int val : Arrayku){
-            if(maks_val<val){
-                maks_val = val;
-            }
-        }
-        return maks_val;
-    }
+public class Tgscountingsort {
     
-    public static int[] sorting(int[] a){
-        int n = a.length;
-        int[] b = new int[n];
-        int k = findgreeter(a);
-        int[] c = new int[k+1];
-        System.out.println("Langkah-Langkah : ");
-        System.out.println(Arrays.toString(c));
+    public static void countingSort(int[] arr) {
+        System.out.println("Input Array: " + Arrays.toString(arr));
+
+        int max = Arrays.stream(arr).max().orElseThrow();
+        int[] count = new int[max + 1];
         
-        for(int i = 0; i<c.length; i++){
-            c[i] = 0;
+        for (int num : arr) {
+            count[num]++;
         }
-        for(int j = 0; j<n; j++){
-            c[a[j]]++;
-            System.out.println(Arrays.toString(c));
+        System.out.println("Step 1 - Count Array:");
+        printArray(count);
+
+        for (int i = 1; i < count.length; i++) {
+            count[i] += count[i - 1];
         }
-        for(int i = 1; i<c.length; i++){
-            c[i] += c[i-1];
-            System.out.println(Arrays.toString(c));
+        System.out.println("Step 2 - Prefix Sum Array:");
+        printArray(count);
+
+        int[] output = new int[arr.length];
+        for (int i = arr.length - 1; i >= 0; i--) {
+            output[count[arr[i]] - 1] = arr[i];
+            count[arr[i]]--;
         }
-        for(int j = n-1; j>=0; j--){
-            b[c[a[j]]-1] = a[j];
-            c[a[j]]--;
-        }
-        return b;
+
+        System.out.println("Sorted Array:");
+        printArray(output);
     }
-    
-    public static void main(String[] args){
-        Scanner input = new Scanner (System.in);
 
-        System.out.print("Masukkan Jumlah Elemen : ");
-        int bil = input.nextInt();
-        int[] nilai = new int[bil];
-
-        System.out.println("Elemen Array yang Terinput : ");
-        for (int i = 0; i<bil; i++){
-            System.out.print("Elemen ke-" + (i+1) + " : ");
-            nilai[i] = input.nextInt();
+    private static void printArray(int[] array) {
+        for (int value : array) {
+            System.out.print(value + " ");
         }
-        
-        System.out.println("\n Array Belum Terurut : " + Arrays.toString(nilai));
-        int[] sortedArray = sorting(nilai);
-        System.out.println("\n Array Sudah Terurut : " + Arrays.toString(sortedArray));
+        System.out.println();
+    }
+
+    public static void main(String[] args) {
+        int[] arr = {6, 4, 1, 2, 8};
+        countingSort(arr);
     }
 }

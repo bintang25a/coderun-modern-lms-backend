@@ -1,3 +1,5 @@
+import fs from "fs";
+
 export function extendSchema(schemaSet, counter) {
   Object.keys(counter || {}).forEach((k) => schemaSet.add(k));
 }
@@ -29,12 +31,16 @@ export function deduplicateDataset(datasetRows) {
 
     const signature = normalizeCounter(row.counter);
 
-    if (!seen.has(signature)) {
-      seen.set(signature, row);
-      result.push(row);
+    if (seen.has(signature)) {
+      if (row.filePath && fs.existsSync(row.filePath)) {
+        fs.unlinkSync(row.filePath);
+      }
+      continue;
     }
+
+    seen.set(signature, true);
+    result.push(row);
   }
 
   return result;
-  return Array.from(seen.values());
 }

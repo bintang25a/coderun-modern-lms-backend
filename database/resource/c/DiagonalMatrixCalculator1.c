@@ -8,7 +8,7 @@ int main() {
     printf("Masukkan jumlah kolom: ");
     scanf("%d", &kolom);
 
-    int matriks[100][100];
+    int matriks[100][100]; // Anggap maksimal ukuran 100x100
 
     printf("Masukkan elemen matriks:\n");
     for (int i = 0; i < baris; i++) {

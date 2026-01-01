@@ -1,25 +1,23 @@
 import java.util.Scanner;
 
-public class JavaQuiz { // Perbaikan nama class agar sesuai konvensi (huruf besar pada nama class)
+public class TQuiz {
 
-    // Method untuk mengecek bilangan prima
-    public static void cekBilPrima(int n) { // Perbaikan nama parameter dari 'itn' menjadi 'n'
-        boolean angkaPrima = true; // Gunakan nama variabel yang konsisten
-        
-        // Bilangan 0 dan 1 bukan bilangan prima
-        if (n == 0 || n == 1) { // Perbaikan 'N' menjadi 'n' agar sesuai dengan parameter
+    public static void cekBilPrima(int n) {
+        System.out.println("Memulai pengecekan bilangan: " + n); // Debugging
+        int i;
+        boolean angkaPrima = true;
+
+        if (n == 0 || n == 1) {
             angkaPrima = false;
         } else {
-            // Periksa bilangan dari 2 hingga n/2
-            for (int i = 2; i <= n / 2; i++) { // Perbaikan loop 'i--' menjadi 'i++'
+            for (i = 2; i <= n / 2; i++) {
                 if (n % i == 0) {
                     angkaPrima = false;
-                    break; // Hentikan loop jika ditemukan pembagi
+                    break;
                 }
             }
         }
 
-        // Tampilkan hasil
         if (angkaPrima) {
             System.out.println(n + " adalah angka prima");
         } else {
@@ -28,14 +26,19 @@ public class JavaQuiz { // Perbaikan nama class agar sesuai konvensi (huruf besa
     }
 
     public static void main(String[] args) {
-        Scanner input = new Scanner(System.in); // Perbaikan komentar, dan Scanner sesuai library
+        Scanner input = new Scanner(System.in);
 
         System.out.println("## Program Java Cek Bilangan Prima ##");
-        System.out.println("=====================================");
+        System.out.println("=======================================\n");
 
         System.out.print("Input sebuah angka bulat: ");
-        int n = input.nextInt(); // Perbaikan tipe Scanner dari 'input.nextint()' menjadi 'input.nextInt()'
-        
-        cekBilPrima(n); // Memanggil method cekBilPrima
+        if (input.hasNextInt()) { // Memastikan input valid
+            int n = input.nextInt();
+            System.out.println("Anda memasukkan angka: " + n); // Debugging
+            cekBilPrima(n);
+        } else {
+            System.out.println("Input tidak valid! Harap masukkan angka bulat.");
+        }
+        System.out.println("Program selesai."); // Debugging
     }
 }

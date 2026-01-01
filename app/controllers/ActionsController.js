@@ -6,6 +6,7 @@ import CPP from "tree-sitter-cpp";
 import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
 import * as pty from "node-pty";
+import { exec } from "child_process";
 import { Assignment } from "../../database/models/Model.js";
 import { buildDataset } from "../utils/javascript/dataset.js";
 import { buildAnswer } from "../utils/javascript/answer.js";
@@ -102,7 +103,6 @@ export const autoGrade = async (req, res) => {
     message: `Automatic grading successfully`,
     dataset: path.join(outputDir, `DATASET_${assignment_number}.csv`),
     answer: path.join(outputDir, `ANSWER_${assignment_number}.csv`),
-    datasetRows,
   });
 };
 
@@ -177,9 +177,13 @@ export const run = async (req, res) => {
   fs.mkdirSync(tempDir, { recursive: true });
   fs.writeFileSync(sourcePath, codeContent);
 
+  const containerName = `sandbox_${uid}`;
+
   const dockerArgs = [
     "run",
     "--rm",
+    "--name",
+    `${containerName}`,
     "-i",
     "-t",
     "--user",
@@ -235,6 +239,7 @@ export const run = async (req, res) => {
       const currentOutput = formatOutput(output);
 
       try {
+        exec(`docker rm -f ${containerName}`);
         ptyProcess.kill();
       } catch (e) {}
 
@@ -262,10 +267,6 @@ export const run = async (req, res) => {
           ? "Execution/Compile Error"
           : "",
       output: cleanOutput,
-      debug: {
-        hostTempDir,
-        tempDir,
-      },
     });
   });
 };

@@ -1,70 +1,46 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 int main() {
-    int baris, kolom;
-    int i, j;
-    printf("Masukkan jumlah baris matriks: ");
-    scanf("%d", &baris);
-    printf("Masukkan jumlah kolom matriks: ");
-    scanf("%d", &kolom);
+    int rows, cols;
+    printf("Masukkan jumlah baris: ");
+    scanf("%d", &rows);
+    printf("Masukkan jumlah kolom: ");
+    scanf("%d", &cols);
 
-    if (baris <= 0 || kolom <= 0) {
-        printf("Jumlah baris dan kolom harus lebih dari 0.\n");
-        return 1;
+    int **matrix = (int **)malloc(rows * sizeof(int *));
+    for (int i = 0; i < rows; i++) {
+        matrix[i] = (int *)malloc(cols * sizeof(int));
     }
 
-    int matriks[baris][kolom]; 
-    int jumlahDiagonalUtama = 0;
-    int jumlahDiagonalSekunder = 0;
-
-    printf("\nMasukkan elemen-elemen matriks:\n");
-    for (i = 0; i < baris; i++) {
-        for (j = 0; j < kolom; j++) {
-            printf("Elemen matriks[%d][%d]: ", i, j);
-            scanf("%d", &matriks[i][j]);
+    printf("Masukkan elemen matriks:\n");
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            printf("Elemen [%d][%d]: ", i, j);
+            scanf("%d", &matrix[i][j]);
         }
     }
 
-    printf("\nMatriks yang Anda masukkan:\n");
-    for (i = 0; i < baris; i++) {
-        for (j = 0; j < kolom; j++) {
-            printf("%d\t", matriks[i][j]);
+    int sum_main_diag = 0;
+    int sum_sec_diag = 0;
+
+    for (int i = 0; i < rows; i++) {
+        if (i < cols) {
+            sum_main_diag += matrix[i][i];
         }
-        printf("\n");
-    }
-
-    for (i = 0; i < baris && i < kolom; i++) {
-        jumlahDiagonalUtama += matriks[i][i];
-    }
-
-   
-    for (i = 0; i < baris; i++) {
-        int j_sekunder = (kolom - 1) - i;
-        if (j_sekunder >= 0 && j_sekunder < kolom) {
-            jumlahDiagonalSekunder += matriks[i][j_sekunder];
+        int sec_diag_col = cols - 1 - i;
+        if (sec_diag_col >= 0 && sec_diag_col < cols) {
+            sum_sec_diag += matrix[i][sec_diag_col];
         }
     }
 
-    printf("\n--- Hasil Perhitungan ---\n");
-    printf("Jumlah elemen pada diagonal utama: %d\n", jumlahDiagonalUtama);
-    printf("Jumlah elemen pada diagonal sekunder: %d\n", jumlahDiagonalSekunder);
-    if (baris != kolom && jumlahDiagonalSekunder != 0) {
-         printf("(Diagonal sekunder dihitung untuk elemen (i,j) dengan i+j = %d)\n", kolom -1);
-    } else if (baris != kolom && jumlahDiagonalSekunder == 0) {
-        int adaElemenValidSekunder = 0;
-        for (i = 0; i < baris; i++) {
-            int j_sekunder = (kolom - 1) - i;
-            if (j_sekunder >= 0 && j_sekunder < kolom) {
-                adaElemenValidSekunder = 1;
-                break;
-            }
-        }
-        if (!adaElemenValidSekunder) {
-             printf("(Tidak ada elemen yang membentuk jalur diagonal sekunder i+j = %d pada matriks ini)\n", kolom-1);
-        } else {
-             printf("(Diagonal sekunder dihitung untuk elemen (i,j) dengan i+j = %d)\n", kolom -1);
-        }
+    printf("Jumlah elemen diagonal utama: %d\n", sum_main_diag);
+    printf("Jumlah elemen diagonal sekunder: %d\n", sum_sec_diag);
+
+    for (int i = 0; i < rows; i++) {
+        free(matrix[i]);
     }
+    free(matrix);
 
     return 0;
 }
