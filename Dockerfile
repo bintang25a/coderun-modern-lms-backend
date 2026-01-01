@@ -2,12 +2,12 @@ FROM coderun-modern-lms-backend
 
 # ===== NORMAL BUILD & RUN =====
 # docker compose down -v
-# docker system prune -f
 # docker compose build --no-cache backend
 # docker compose up -d
 # docker build -t coderun-modern-lms-sandbox -f docker/Dockerfile.sandbox .
 
 # ===== JIKA KONFLIK =====
+# docker system prune -f
 # docker compose down --remove-orphans
 # docker rm -f coderun-modern-lms-mysql
 # docker volume rm backend_coderun-modern-lms-mysql

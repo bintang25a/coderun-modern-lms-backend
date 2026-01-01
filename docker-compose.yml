@@ -32,11 +32,11 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - .:/app
-      - ./public:/app/public
-      - /app/node_modules
+      - .:/backend
+      - ./public:/backend/public
+      - /backend/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./app/temp:/app/app/temp
+      - ./temp:/temp
     command: nodemon -L index.js
 
 volumes:
