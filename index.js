@@ -42,11 +42,6 @@ app.use(
   express.static(path.join(__dirname, "public/profiles"))
 );
 
-const classroomPath = "./public/classrooms";
-if (!fs.existsSync(classroomPath)) {
-  fs.mkdirSync(classroomPath, { recursive: true });
-}
-
 const profilesPath = "./public/profiles";
 if (!fs.existsSync(profilesPath)) {
   fs.mkdirSync(profilesPath, { recursive: true });
