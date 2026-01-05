@@ -8,15 +8,18 @@ export function parseCode(parser, filePath) {
 
   const counter = {};
 
+  const totalLines =
+    tree.rootNode.endPosition.row - tree.rootNode.startPosition.row + 1;
+
+  counter["TOTAL_LINES"] = totalLines;
+
   function walk(node, path = []) {
     const type = node.type;
 
-    // skip comment
     if (type.includes("comment")) return;
 
     const newPath = [...path, type];
 
-    // ambil path pendek (biar fitur tidak terlalu besar)
     if (newPath.length >= 2) {
       const pathKey = newPath.slice(-2).join(">");
       counter[pathKey] = (counter[pathKey] || 0) + 1;
