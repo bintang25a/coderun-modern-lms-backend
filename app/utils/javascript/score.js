@@ -74,5 +74,7 @@ export function calculateScore(key, answer, testCaseResult) {
     score3: STCAM(testCaseResult),
   };
 
+  console.log(score);
+
   return (score.score1 + score.score1 + score.score1) / 3;
 }

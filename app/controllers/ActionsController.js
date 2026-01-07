@@ -68,6 +68,7 @@ export const autoGrade = async (req, res) => {
     schemaSet,
     language,
     testCases: test_cases,
+    uid: req.uid,
   });
 
   const answerRows = await buildAnswer({

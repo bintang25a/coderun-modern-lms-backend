@@ -14,6 +14,7 @@ export async function buildDataset({
   schemaSet,
   language,
   testCases,
+  uid,
 }) {
   const datasetDir = path
     .join(BASE_DIR, "database/resource", language)
@@ -37,21 +38,20 @@ export async function buildDataset({
     counter: keyCounter,
   });
 
-  let rowId = 1;
   const expected = {};
 
   for (const tc of testCases) {
     const result = await executeCode({
-      uiduid: `${rowId}_answer`,
+      uid,
       language,
       codePath: keyPath,
       input: tc.input || "",
     });
 
-    expected[tc.name] = result.output;
+    expected[tc.name] = result.output?.trim();
   }
 
-  rowId = 1;
+  let rowId = 1;
   for (const file of fs.readdirSync(datasetDir)) {
     if (!file.endsWith(`.${language}`)) continue;
 
@@ -62,14 +62,13 @@ export async function buildDataset({
 
     const filePath = path.join(datasetDir, file);
 
-    // console.log(filePath);
-
     const testCaseResult = await runTestCasesForFile({
-      uid: rowId,
+      uid,
       language,
       codePath: filePath,
       expected,
       testCases,
+      containerName: `sandbox-${uid}-${rowId}`,
     });
 
     rows.push({
