@@ -3,10 +3,18 @@ import path from "path";
 import { parseCode } from "./parser.js";
 import { calculateScore } from "./score.js";
 import { deduplicateDataset, extendSchema } from "./schema.js";
+import { runTestCasesForFile } from "./testcaseRunner.js";
+import { executeCode } from "./execute.js";
 
 const BASE_DIR = process.cwd();
 
-export function buildDataset({ assignment, parser, language, schemaSet }) {
+export async function buildDataset({
+  assignment,
+  parser,
+  schemaSet,
+  language,
+  testCases,
+}) {
   const datasetDir = path
     .join(BASE_DIR, "database/resource", language)
     .replace(/\\/g, "/");
@@ -30,7 +38,20 @@ export function buildDataset({ assignment, parser, language, schemaSet }) {
   });
 
   let rowId = 1;
+  const expected = {};
 
+  for (const tc of testCases) {
+    const result = await executeCode({
+      uiduid: `${rowId}_answer`,
+      language,
+      codePath: keyPath,
+      input: tc.input || "",
+    });
+
+    expected[tc.name] = result.output;
+  }
+
+  rowId = 1;
   for (const file of fs.readdirSync(datasetDir)) {
     if (!file.endsWith(`.${language}`)) continue;
 
@@ -41,10 +62,21 @@ export function buildDataset({ assignment, parser, language, schemaSet }) {
 
     const filePath = path.join(datasetDir, file);
 
+    // console.log(filePath);
+
+    const testCaseResult = await runTestCasesForFile({
+      uid: rowId,
+      language,
+      codePath: filePath,
+      expected,
+      testCases,
+    });
+
     rows.push({
       row_id: rowId++,
-      score: calculateScore(keyCounter, counter),
+      score: calculateScore(keyCounter, counter, testCaseResult),
       counter,
+      testCaseResult,
       filePath,
     });
   }

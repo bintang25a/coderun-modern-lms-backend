@@ -17,9 +17,9 @@ const BASE_DIR = process.cwd();
 const HOST_BASE_DIR = process.env.HOST_PROJECT_PATH;
 
 export const autoGrade = async (req, res) => {
-  const { assignment_number, language } = req.body;
+  const { assignment_number, language, test_cases } = req.body;
 
-  if (!assignment_number || !language) {
+  if (!assignment_number || !language || !test_cases) {
     return res.status(400).json({
       success: false,
       message: "Automatic grading failed, Field cannot empty",
@@ -62,14 +62,15 @@ export const autoGrade = async (req, res) => {
 
   const schemaSet = new Set();
 
-  const datasetRows = buildDataset({
+  const datasetRows = await buildDataset({
     assignment,
     parser,
-    language,
     schemaSet,
+    language,
+    testCases: test_cases,
   });
 
-  const answerRows = buildAnswer({
+  const answerRows = await buildAnswer({
     assignment,
     parser,
     schemaSet,

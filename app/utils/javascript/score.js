@@ -42,8 +42,6 @@ export function SEDM(answer) {
 
   const score = Math.max((1 - errorPercentage) * 100, 0);
 
-  console.log(`Error: ${errorPercentage} Score: ${score}`);
-
   return Math.round(score);
 }
 
@@ -69,6 +67,12 @@ export function STCAM(answer) {
   return Math.round((weightedPassSum / totalWeight) * 100);
 }
 
-export function calculateScore(key, answer) {
-  return (SBCAM(key, answer) + SEDM(answer) + STCAM(answer)) / 3;
+export function calculateScore(key, answer, testCaseResult) {
+  const score = {
+    score1: SBCAM(key, answer),
+    score2: SEDM(answer),
+    score3: STCAM(testCaseResult),
+  };
+
+  return (score.score1 + score.score1 + score.score1) / 3;
 }
