@@ -86,10 +86,7 @@ export const autoGrade = async (req, res) => {
     r.row_id,
     r.score,
     r.validation,
-    ...header.slice(2).map((k) => {
-      r.counter[k] || 0;
-      console.log(k);
-    }),
+    ...header.slice(2).map((k) => r.counter[k] || 0),
   ];
 
   writeCSV(
