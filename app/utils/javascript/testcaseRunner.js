@@ -55,7 +55,7 @@ export async function runTestCasesForFile({
     const actualOutput = actual.output?.trim() ?? "";
 
     const similarity = outputSimilarity(expectedOutput, actualOutput);
-    const threshold = 20;
+    const threshold = 30;
     const pass = similarity >= threshold;
 
     console.log(similarity);

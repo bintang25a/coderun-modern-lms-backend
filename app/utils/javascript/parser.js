@@ -8,11 +8,6 @@ export function parseCode(parser, filePath) {
 
   const counter = {};
 
-  const totalLines =
-    tree.rootNode.endPosition.row - tree.rootNode.startPosition.row + 1;
-
-  counter["TOTAL_LINES"] = totalLines;
-
   function walk(node, path = []) {
     const type = node.type;
 
@@ -31,6 +26,11 @@ export function parseCode(parser, filePath) {
   }
 
   walk(tree.rootNode);
+
+  const totalLines =
+    tree.rootNode.endPosition.row - tree.rootNode.startPosition.row + 1;
+
+  counter["TOTAL_LINES"] = totalLines;
 
   return counter;
 }

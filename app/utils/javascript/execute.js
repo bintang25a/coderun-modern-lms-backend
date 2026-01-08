@@ -11,7 +11,7 @@ export const executeCode = async ({
   language,
   codePath,
   input = "",
-  timeLimit = 5000,
+  timeLimit = 2000,
   containerName = "sandbox",
 }) => {
   return new Promise((resolve) => {
@@ -44,12 +44,12 @@ export const executeCode = async ({
 
     switch (language) {
       case "c":
-        filename = "main.c";
-        compileRunCmd = "gcc main.c -o app && stdbuf -i0 -o0 -e0 ./app";
+        filename = `${containerName}.c`;
+        compileRunCmd = `gcc ${containerName}.c -o ${containerName} && stdbuf -i0 -o0 -e0 ./${containerName}`;
         break;
       case "cpp":
-        filename = "main.cpp";
-        compileRunCmd = "g++ main.cpp -o app && stdbuf -i0 -o0 -e0 ./app";
+        filename = `${containerName}.cpp`;
+        compileRunCmd = `g++ ${containerName}.cpp -o ${containerName} && stdbuf -i0 -o0 -e0 ./${containerName}`;
         break;
       case "java":
         const classMatch = codeContent.match(
@@ -164,6 +164,10 @@ export const executeCode = async ({
       clearTimeout(timeout);
 
       const cleanOutput = formatOutput(output);
+
+      try {
+        exec(`docker rm -f ${containerName}`);
+      } catch (e) {}
 
       resolve({
         success: true,

@@ -5,17 +5,13 @@ import { calculateScore } from "./score.js";
 import { deduplicateDataset, extendSchema } from "./schema.js";
 import { runTestCasesForFile } from "./testcaseRunner.js";
 import { executeCode } from "./execute.js";
+import { determineTaskLabel } from "./validation.js";
 
 const BASE_DIR = process.cwd();
 
-export async function buildDataset({
-  assignment,
-  parser,
-  schemaSet,
-  language,
-  testCases,
-  uid,
-}) {
+export async function buildDataset(param) {
+  const { assignment, parser, schemaSet, language, testCases, uid } = param;
+
   const datasetDir = path
     .join(BASE_DIR, "database/resource", language)
     .replace(/\\/g, "/");
@@ -35,11 +31,11 @@ export async function buildDataset({
   rows.push({
     row_id: "key",
     score: 100,
+    validation: "in-task",
     counter: keyCounter,
   });
 
   const expected = {};
-
   for (const tc of testCases) {
     const result = await executeCode({
       uid,
@@ -56,6 +52,7 @@ export async function buildDataset({
     if (!file.endsWith(`.${language}`)) continue;
 
     const counter = parseCode(parser, path.join(datasetDir, file));
+
     if (!counter) continue;
 
     extendSchema(schemaSet, counter);
@@ -74,8 +71,8 @@ export async function buildDataset({
     rows.push({
       row_id: rowId++,
       score: calculateScore(keyCounter, counter, testCaseResult),
+      validation: determineTaskLabel(testCaseResult),
       counter,
-      testCaseResult,
       filePath,
     });
   }

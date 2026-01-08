@@ -5,7 +5,7 @@ export function extendSchema(schemaSet, counter) {
 }
 
 export function finalizeHeader(schemaSet) {
-  return ["row_id", "score", ...Array.from(schemaSet).sort()];
+  return ["row_id", "score", "validation", ...Array.from(schemaSet).sort()];
 }
 
 export function normalizeCounter(counter) {

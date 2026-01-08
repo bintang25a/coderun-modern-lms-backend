@@ -19,6 +19,7 @@ export function buildAnswer({ assignment, parser, schemaSet }) {
     rows.push({
       row_id: s.submission_number,
       score: 0,
+      validation: "not-set",
       counter,
     });
   }
