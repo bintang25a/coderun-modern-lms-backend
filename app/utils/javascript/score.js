@@ -10,7 +10,7 @@ export function plagiarismChecker(key, answer) {
   return Math.round((score / total) * 100);
 }
 
-export function SBCAM(key, answer) {
+export async function SBCAM(key, answer) {
   let Tf = 0;
   let Sf = 0;
 
@@ -26,7 +26,7 @@ export function SBCAM(key, answer) {
   return Math.round(Fs * 100);
 }
 
-export function SEDM(answer) {
+export async function SEDM(answer) {
   const TOTAL_LINES = answer.TOTAL_LINES || 0;
   if (TOTAL_LINES <= 0) return 0;
 
@@ -45,7 +45,7 @@ export function SEDM(answer) {
   return Math.round(score);
 }
 
-export function STCAM(answer) {
+export async function STCAM(answer) {
   let weightedPassSum = 0;
   let totalWeight = 0;
 

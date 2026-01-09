@@ -18,6 +18,7 @@ const HOST_BASE_DIR = process.env.HOST_PROJECT_PATH;
 
 export const autoGrade = async (req, res) => {
   const { assignment_number, language, test_cases } = req.body;
+  const { uid } = req;
 
   if (!assignment_number || !language || !test_cases) {
     return res.status(400).json({
@@ -68,7 +69,7 @@ export const autoGrade = async (req, res) => {
     schemaSet,
     language,
     testCases: test_cases,
-    uid: req.uid,
+    uid,
   });
 
   const answerRows = await buildAnswer({
@@ -86,7 +87,7 @@ export const autoGrade = async (req, res) => {
     r.row_id,
     r.score,
     r.validation,
-    ...header.slice(2).map((k) => r.counter[k] || 0),
+    ...header.slice(3).map((k) => r.counter[k] || 0),
   ];
 
   writeCSV(
@@ -100,6 +101,16 @@ export const autoGrade = async (req, res) => {
     header,
     answerRows.map(toCSVRow)
   );
+
+  const tempDir = path.resolve(BASE_DIR, "temp", uid);
+  fs.readdirSync(tempDir).forEach((file) => {
+    const filePath = path.join(tempDir, file);
+    const ext = path.extname(file).toLowerCase();
+
+    if (ext !== ".csv" && ext !== ".json") {
+      fs.rmSync(filePath, { recursive: true, force: true });
+    }
+  });
 
   return res.status(200).json({
     success: true,

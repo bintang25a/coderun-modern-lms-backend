@@ -144,7 +144,10 @@ export const executeCode = async ({
         const currentOutput = formatOutput(output);
 
         try {
-          exec(`docker rm -f ${containerName}`);
+          setTimeout(() => {
+            exec(`docker rm -f ${containerName}`);
+          }, Number(timeLimit));
+
           ptyProcess.kill();
         } catch (e) {}
 
@@ -166,7 +169,9 @@ export const executeCode = async ({
       const cleanOutput = formatOutput(output);
 
       try {
-        exec(`docker rm -f ${containerName}`);
+        setTimeout(() => {
+          exec(`docker rm -f ${containerName}`);
+        }, Number(timeLimit));
       } catch (e) {}
 
       resolve({

@@ -35,7 +35,7 @@ export async function runTestCasesForFile({
 }) {
   const result = {};
 
-  const executions = testCases.map((tc) =>
+  const executions = await testCases.map((tc) =>
     executeCode({
       uid,
       language,

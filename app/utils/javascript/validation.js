@@ -1,4 +1,8 @@
-export function determineTaskLabel(testCaseResult, passRatioThreshold = 0.3) {
+export function determineTaskLabel(
+  testCaseResult,
+  stcamScore,
+  { passRatioThreshold = 0.3, stcamThreshold = 50 } = {}
+) {
   let totalWeight = 0;
   let passedWeight = 0;
 
@@ -15,5 +19,17 @@ export function determineTaskLabel(testCaseResult, passRatioThreshold = 0.3) {
 
   const passRatio = totalWeight === 0 ? 0 : passedWeight / totalWeight;
 
-  return passRatio >= passRatioThreshold ? "in-task" : "out-task";
+  const isTestCasePass = passRatio >= passRatioThreshold;
+  const isStcamHigh = stcamScore >= stcamThreshold;
+
+  let validation = "";
+  if (isTestCasePass && isStcamHigh) {
+    validation = "valid";
+  } else if (isTestCasePass || isStcamHigh) {
+    validation = "middle";
+  } else {
+    validation = "invalid";
+  }
+
+  return validation;
 }

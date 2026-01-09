@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { parseCode } from "./parser.js";
-import { calculateScore } from "./score.js";
+import { calculateScore, SBCAM, SEDM, STCAM } from "./score.js";
 import { deduplicateDataset, extendSchema } from "./schema.js";
 import { runTestCasesForFile } from "./testcaseRunner.js";
 import { executeCode } from "./execute.js";
@@ -31,7 +31,7 @@ export async function buildDataset(param) {
   rows.push({
     row_id: "key",
     score: 100,
-    validation: "in-task",
+    validation: "valid",
     counter: keyCounter,
   });
 
@@ -68,10 +68,14 @@ export async function buildDataset(param) {
       containerName: `sandbox-${uid}-${rowId}`,
     });
 
+    const sbcamResult = await SBCAM(keyCounter, counter);
+    const stcamResult = await STCAM(testCaseResult);
+    const sedmResult = await SEDM(counter);
+
     rows.push({
       row_id: rowId++,
-      score: calculateScore(keyCounter, counter, testCaseResult),
-      validation: determineTaskLabel(testCaseResult),
+      score: Math.round((sbcamResult + stcamResult + sedmResult) / 3),
+      validation: determineTaskLabel(testCaseResult, sbcamResult),
       counter,
       filePath,
     });
