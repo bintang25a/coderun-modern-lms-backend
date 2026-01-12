@@ -1,36 +1,118 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
+ */
+import java.util.Arrays;
+import java.util.Scanner;
+/**
+ *
+ * @author Adam
+ */
 public class U002 {
 
-  // Metode untuk mencetak elemen array 2D
-  public static void cetakArray2D(String[][] B) {
-      System.out.println("--- Array 2D (Alokasi & Pengisian Manual) ---");
-      // Menggunakan enhanced for loop (For-Each) untuk baris (array 1D)
-      for (String[] baris : B) {
-          // Menggunakan enhanced for loop (For-Each) untuk kolom (elemen)
-          for (String elemen : baris) {
-              System.out.print(elemen + "\t");
-          }
-          System.out.println();
-      }
-  }
+    //3 Fungsi untuk menggabungkan dua subarray yang sudah terurut
+    public static void merge(int[] arr, int l, int m, int r) {
+        int n1 = m - l + 1; // Panjang subarray kiri
+        int n2 = r - m;     // Panjang subarray kanan
 
-  public static void main(String[] args) {
-      int baris = 2;
-      int kolom = 4;
-      
-      // Deklarasi array 2D tipe String dengan alokasi memori
-      String[][] dataSiswa = new String[baris][kolom]; 
-      
-      // Pengisian nilai secara manual
-      dataSiswa[0][0] = "Nama";
-      dataSiswa[0][1] = "Kelas";
-      dataSiswa[0][2] = "Nilai";
-      dataSiswa[0][3] = "Status";
+        // Membuat array sementara untuk subarray kiri dan kanan
+        int[] L = new int[n1];
+        int[] R = new int[n2];
 
-      dataSiswa[1][0] = "Andi";
-      dataSiswa[1][1] = "XII IPA";
-      dataSiswa[1][2] = "85";
-      dataSiswa[1][3] = "Lulus";
-      
-      cetakArray2D(dataSiswa);
-  }
+        // Menyalin data ke array sementara
+        for (int i = 0; i < n1; i++) {
+            L[i] = arr[l + i];
+        }
+        for (int j = 0; j < n2; j++) {
+            R[j] = arr[m + 1 + j];
+        }
+        
+        // Tampilkan proses Merge
+        System.out.println("-> Menggabungkan (Merge):");
+        System.out.println("   Kiri: " + Arrays.toString(L));
+        System.out.println("   Kanan: " + Arrays.toString(R));
+
+        // Menggabungkan subarray sementara ke array asli
+        int i = 0, j = 0; // Indeks awal untuk L dan R
+        int k = l;        // Indeks awal untuk array gabungan
+        while (i < n1 && j < n2) {
+            if (L[i] <= R[j]) {
+                arr[k] = L[i];
+                i++;
+            } else {
+                arr[k] = R[j];
+                j++;
+            }
+            k++;
+        }
+        // Menyalin elemen sisa di L jika ada
+        while (i < n1) {
+            arr[k] = L[i];
+            i++;
+            k++;
+        }
+        // Menyalin elemen sisa di R jika ada
+        while (j < n2) {
+            arr[k] = R[j];
+            j++;
+            k++;
+        }
+        
+        // Cetak hasil merge
+        int[] hasil = Arrays.copyOfRange(arr, l, r + 1);
+        System.out.println("   Hasil Merge: " + Arrays.toString(hasil));
+    }
+    // Fungsi untuk membagi array, lalu memanggil merge
+    public static void sort(int[] arr, int l, int r) {
+        if (l < r) {
+            // Menentukan titik tengah
+            int m = l + (r - l) / 2;
+            
+            // Tampilkan proses Divide
+            System.out.print("Membagi (Divide): [");
+            for (int i = l; i <= r; i++) {
+                System.out.print(arr[i] + (i < r ? ", " : ""));
+            }
+            System.out.println("]");
+            
+            // Membagi menjadi dua bagian, lalu mengurutkan
+            sort(arr, l, m);
+            sort(arr, m + 1, r);
+            // Menggabungkan hasil
+            merge(arr, l, m, r);
+            
+        }
+    }
+    // Fungsi untuk mencetak array
+    public static void printArray(int[] arr) {
+        for (int i : arr) {
+            System.out.print(i + " ");
+        }
+        System.out.println();
+    }
+    // Fungsi utama
+    public static void main(String[] args) {
+        Scanner input = new Scanner (System.in);
+        //int[] arr = {5, 2, 3, 1, 4, 8, 9};
+        int [] arr;
+        int bil;
+        System.out.print("Masukkan Angka : ");  bil=input.nextInt();
+        System.out.println();
+       /* System.out.println("Array semula:");
+        printArray(arr); */
+       arr=new int[bil];
+        for (int i = 0; i < bil; i++) {
+            System.out.print("Masukan Data ke-"+(i+1)+" = ");
+            arr[i]=input.nextInt();
+        }
+        System.out.println("\nArray Belum Terurut : ");
+        for(int i:arr){
+            System.out.print(i+" ");
+        }        
+        // Memanggil fungsi sort
+        sort(arr, 0, arr.length - 1);
+        System.out.println("\nArray terurut :");
+        printArray(arr);
+    }
+    
 }

@@ -130,6 +130,26 @@ export const autoGrade = async (req, res) => {
     }
   });
 
+  const modelPyPath = path.join(
+    BASE_DIR,
+    "controllers",
+    "utils",
+    "python",
+    "model.py"
+  );
+
+  if (!fs.existsSync(modelPyPath)) {
+    return res.status(400).json({
+      success: false,
+      message: "Automatic grading failed, Model AI not found",
+    });
+  }
+
+  // Baca isinya untuk diletakkan di tempDir agar bisa diakses Docker
+  const codeContent = fs.readFileSync(modelPyPath, "utf8");
+  const filename = "model.py";
+  const compileRunCmd = "python3 -u model.py";
+
   return res.status(200).json({
     success: true,
     message: `Automatic grading successfully`,
@@ -187,7 +207,7 @@ export const run = async (req, res) => {
       const className = classMatch ? classMatch[1] : "Main";
 
       filename = `${className}.java`;
-      compileRunCmd = `javac ${filename} && exec java ${className}`;
+      compileRunCmd = `javac ${filename} && java -Djdk.console=java.base -Dsun.stdout.buffered=false ${className}`;
       break;
     case "python":
       filename = "main.py";
@@ -245,11 +265,6 @@ export const run = async (req, res) => {
 
   let output = "";
   let isFinished = false;
-  let ptyAlive = true;
-
-  ptyProcess.onExit(() => {
-    ptyAlive = false;
-  });
 
   const formatOutput = (raw) => {
     return raw
@@ -261,14 +276,19 @@ export const run = async (req, res) => {
   const inputQueue = input ? input.trim().split(/\s+/) : [];
   let currentIdx = 0;
 
+  const inputDelay = language !== "java" ? 0 : 100;
   ptyProcess.onData((data) => {
     output += data;
 
-    if (inputQueue.length > 0 && currentIdx < inputQueue.length && ptyAlive) {
-      ptyProcess.write(`${inputQueue[currentIdx]}\r`);
+    setTimeout(() => {
+      const condition =
+        inputQueue.length > 0 && currentIdx < inputQueue.length && !isFinished;
 
-      currentIdx++;
-    }
+      if (condition) {
+        ptyProcess.write(`${inputQueue[currentIdx]}\r`);
+        currentIdx++;
+      }
+    }, Number(inputDelay));
   });
 
   const timeout = setTimeout(() => {
@@ -284,7 +304,7 @@ export const run = async (req, res) => {
       message: "Running code failed, Execution Timed Out",
       output: "",
     });
-  }, Math.min(Number(timeLimit) * 100, 10000));
+  }, Math.min(Number(timeLimit) * 100, 60000));
 
   const terminate = setTimeout(() => {
     if (currentIdx == inputQueue.length) {
@@ -313,7 +333,6 @@ export const run = async (req, res) => {
     if (isFinished) return;
 
     isFinished = true;
-    ptyAlive = false;
 
     const hasError = exitCode !== 0 && output.toLowerCase().includes("error");
 
