@@ -1,53 +1,56 @@
 import fs from "fs";
 import path from "path";
 
-/**
- * Rename semua file program dalam folder
- * contoh output: program1.cpp, program2.cpp, ...
- *
- * @param {string} targetDir - folder target
- * @param {string} extension - ekstensi file (contoh: "cpp", "c", "java")
- * @param {string} prefix - nama awal file (default: "program")
- */
-function renamePrograms(targetDir, extension, prefix = "program") {
-  if (!fs.existsSync(targetDir)) {
-    console.error("Folder tidak ditemukan:", targetDir);
-    return;
-  }
+// --- KONFIGURASI ---
+const TARGET_FOLDER = "./trash/rename"; // Folder tempat file Java berada
+const NEW_BASE_NAME = "exam"; // Nama dasar (a1, a2, ...)
+// -------------------
 
-  const files = fs
-    .readdirSync(targetDir)
-    .filter((f) => f.endsWith(`.${extension}`))
-    .sort(); // biar urut & konsisten
+function processJavaFiles() {
+  try {
+    const files = fs
+      .readdirSync(TARGET_FOLDER)
+      .filter((file) => file.endsWith(".java"))
+      .sort(); // Urutkan agar penomoran rapi
 
-  let counter = 1;
-
-  for (const file of files) {
-    const oldPath = path.join(targetDir, file);
-    const newName = `${prefix}${counter}.${extension}`;
-    const newPath = path.join(targetDir, newName);
-
-    // Hindari overwrite
-    if (fs.existsSync(newPath)) {
-      console.warn("Skip (sudah ada):", newName);
-      counter++;
-      continue;
+    if (files.length === 0) {
+      console.log("Tidak ada file .java ditemukan.");
+      return;
     }
 
-    fs.renameSync(oldPath, newPath);
-    console.log(`${file} → ${newName}`);
-    counter++;
-  }
+    files.forEach((filename, index) => {
+      const oldPath = path.join(TARGET_FOLDER, filename);
+      const oldClassName = path.parse(filename).name;
+      const newClassName = `${NEW_BASE_NAME}${index + 1}`;
+      const newPath = path.join(TARGET_FOLDER, `${newClassName}.java`);
 
-  console.log("✅ Rename selesai");
+      // 1. Baca isi file
+      let content = fs.readFileSync(oldPath, "utf8");
+
+      // 2. Hapus baris package (menggunakan Regex)
+      // Menghapus baris yang dimulai dengan 'package' sampai titik koma ';'
+      content = content.replace(/^package\s+[\w.]+;\s*\r?\n?/gm, "");
+
+      // 3. Update nama Class agar sesuai dengan nama file baru
+      // Mencari 'public class NamaLama' dan menggantinya ke 'public class a1'
+      const classRegex = new RegExp(`public\\s+class\\s+${oldClassName}`, "g");
+      content = content.replace(classRegex, `public class ${newClassName}`);
+
+      // 4. Tulis ulang file dengan konten baru
+      fs.writeFileSync(oldPath, content, "utf8");
+
+      // 5. Rename file fisik
+      fs.renameSync(oldPath, newPath);
+
+      console.log(
+        `Berhasil: ${filename} -> ${newClassName}.java (Package dihapus & Class diupdate)`
+      );
+    });
+
+    console.log("\nProses selesai semua!");
+  } catch (err) {
+    console.error("Terjadi kesalahan:", err.message);
+  }
 }
 
-/* =======================
-   CONTOH PEMAKAIAN
-======================= */
-
-// ganti sesuai kebutuhan
-const folder = "./database/resource/cpp";
-const language = "cpp";
-
-renamePrograms(folder, language);
+processJavaFiles();

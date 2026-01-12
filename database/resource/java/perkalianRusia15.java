@@ -1,0 +1,61 @@
+import java.util.Scanner;
+
+public class perkalian_rusia {
+
+    public static int perkalian(int i, int j) {
+        int total = 0;
+
+        if (i % 2 == 0) {
+            System.out.println(i + "\t " + j);
+        }
+
+        while (i > 1) {
+            if (i % 2 != 0) {
+                if (i % 2 == 1) {
+                    System.out.println(i + "\t " + j + "\tambil " + j);
+                }
+                total = total + j;
+            }
+
+            i /= 2;
+            j *= 2;
+
+            if (i % 2 != 0) {
+                System.out.print("");
+            }
+
+            if (i % 2 == 0) {
+                System.out.println(i + "\t " + j);
+            }
+        }
+
+        while (i >= 1) {
+            if (i % 2 != 0) {
+                if (i % 2 == 1) {
+                    System.out.println(i + "\t " + j + "\tambil " + j);
+                }
+                total = total + j;
+            }
+
+            i /= 2;
+            j *= 2;
+        }
+
+        return total;
+    }
+
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+        int a, b;
+
+        System.out.print("Masukkan Bilangan 1 : ");
+        a = input.nextInt();
+
+        System.out.print("Masukkan Bilangan 2 : ");
+        b = input.nextInt();
+
+        System.out.println("\nA \t B\n");
+
+        System.out.println("\n" + a + " * " + b + " = " + perkalian(a, b));
+    }
+}

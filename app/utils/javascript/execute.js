@@ -64,7 +64,8 @@ export const executeCode = async (param) => {
         const className = classMatch ? classMatch[1] : "Main";
 
         filename = `${className}.java`;
-        compileRunCmd = `javac ${filename} && timeout 1s stdbuf -i0 -o0 -e0 java ${className}`;
+        // compileRunCmd = `javac ${filename} && timeout 1s stdbuf -i0 -o0 -e0 java ${className}`;
+        compileRunCmd = `javac ${filename} && exec java ${className}`;
         break;
       case "python":
         filename = "main.py";

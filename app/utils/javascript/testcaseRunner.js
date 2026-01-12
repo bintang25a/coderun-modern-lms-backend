@@ -56,6 +56,8 @@ export async function runTestCasesForFile(param) {
     const threshold = 30;
     const pass = similarity >= threshold;
 
+    console.log(`Expected: ${expectedOutput}\nActual: ${actualOutput}`);
+
     result[`TC>${tc.name}`] = pass;
     result[`TC_WEIGHT>${tc.name}`] = tc.weight || 1;
   }

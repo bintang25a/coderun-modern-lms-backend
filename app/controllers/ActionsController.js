@@ -20,14 +20,25 @@ const HOST_BASE_DIR = process.env.HOST_PROJECT_PATH;
 const asyncExec = promisify(exec);
 
 export const autoGrade = async (req, res) => {
-  const { assignment_number, language, test_cases, concurrency = 1 } = req.body;
+  const { assignment_number, language } = req.body;
+  const { test_cases, concurrency = 1 } = req.body;
   const { uid } = req;
 
-  if (!assignment_number || !language || !test_cases) {
+  if (!assignment_number || !language) {
     return res.status(400).json({
       success: false,
       message: "Automatic grading failed, Field cannot empty",
     });
+  }
+
+  let testCases = test_cases;
+  if (!test_cases) {
+    testCases = [
+      {
+        name: "TC",
+        weight: 1,
+      },
+    ];
   }
 
   const assignment = await Assignment.findOne({
@@ -71,7 +82,7 @@ export const autoGrade = async (req, res) => {
     parser,
     schemaSet,
     language,
-    testCases: test_cases,
+    testCases,
     uid,
     CONCURRENCY: concurrency,
   });
@@ -81,7 +92,7 @@ export const autoGrade = async (req, res) => {
     parser,
     schemaSet,
     language,
-    testCases: test_cases,
+    testCases,
     uid,
   });
 
