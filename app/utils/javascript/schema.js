@@ -1,14 +1,14 @@
 import fs from "fs";
 
-export function extendSchema(schemaSet, counter) {
+export async function extendSchema(schemaSet, counter) {
   Object.keys(counter || {}).forEach((k) => schemaSet.add(k));
 }
 
 export function finalizeHeader(schemaSet) {
-  return ["row_id", "score", "validation", ...Array.from(schemaSet).sort()];
+  return ["row_id", "score", "scale", ...Array.from(schemaSet).sort()];
 }
 
-export function normalizeCounter(counter) {
+export async function normalizeCounter(counter) {
   return JSON.stringify(
     Object.keys(counter)
       .sort()
@@ -19,7 +19,7 @@ export function normalizeCounter(counter) {
   );
 }
 
-export function deduplicateDataset(datasetRows) {
+export async function deduplicateDataset(datasetRows) {
   const seen = new Map();
   const result = [];
 
@@ -29,7 +29,7 @@ export function deduplicateDataset(datasetRows) {
       continue;
     }
 
-    const signature = normalizeCounter(row.counter);
+    const signature = await normalizeCounter(row.counter);
 
     if (seen.has(signature)) {
       if (row.filePath && fs.existsSync(row.filePath)) {

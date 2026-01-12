@@ -1,40 +1,38 @@
 import { executeCode } from "./execute.js";
 
-function tokenize(str) {
-  return str.trim().split(/\s+/);
-}
+async function outputSimilarity(expected, actual) {
+  if (expected === actual) return 100;
+  if (!expected || !actual) return 0;
 
-function outputSimilarity(expected, actual) {
-  const T = tokenize(expected);
-  const A = tokenize(actual);
+  const n = expected.length;
+  const m = actual.length;
 
-  const freq = {};
-  T.forEach((t) => (freq[t] = (freq[t] || 0) + 1));
+  let prevRow = Array.from({ length: m + 1 }, (_, i) => i);
+  let currRow = new Array(m + 1);
 
-  let matchedWeight = 0;
-
-  for (const token of A) {
-    if (freq[token]) {
-      matchedWeight += 1;
-      freq[token]--;
+  for (let i = 1; i <= n; i++) {
+    currRow[0] = i;
+    for (let j = 1; j <= m; j++) {
+      const cost = expected[i - 1] === actual[j - 1] ? 0 : 1;
+      currRow[j] = Math.min(
+        currRow[j - 1] + 1,
+        prevRow[j] + 1,
+        prevRow[j - 1] + cost
+      );
     }
+    prevRow = [...currRow];
   }
 
-  if (T.length === 0) return 100;
+  const distance = prevRow[m];
+  const maxLength = Math.max(n, m);
 
-  return (matchedWeight / T.length) * 100;
+  return Math.ceil(((maxLength - distance) / maxLength) * 100);
 }
 
-export async function runTestCasesForFile({
-  uid,
-  language,
-  codePath,
-  expected,
-  testCases,
-  containerName,
-}) {
-  const result = {};
+export async function runTestCasesForFile(param) {
+  const { uid, language, codePath, expected, testCases, containerName } = param;
 
+  const result = {};
   const executions = await testCases.map((tc) =>
     executeCode({
       uid,
@@ -54,7 +52,7 @@ export async function runTestCasesForFile({
     const expectedOutput = expected[tc.name]?.trim() ?? "";
     const actualOutput = actual.output?.trim() ?? "";
 
-    const similarity = outputSimilarity(expectedOutput, actualOutput);
+    const similarity = await outputSimilarity(expectedOutput, actualOutput);
     const threshold = 30;
     const pass = similarity >= threshold;
 

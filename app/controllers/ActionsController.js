@@ -7,6 +7,7 @@ import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
 import * as pty from "node-pty";
 import { exec } from "child_process";
+import { promisify } from "util";
 import { Assignment } from "../../database/models/Model.js";
 import { buildDataset } from "../utils/javascript/dataset.js";
 import { buildAnswer } from "../utils/javascript/answer.js";
@@ -16,8 +17,10 @@ import { writeCSV } from "../utils/javascript/csv.js";
 const BASE_DIR = process.cwd();
 const HOST_BASE_DIR = process.env.HOST_PROJECT_PATH;
 
+const asyncExec = promisify(exec);
+
 export const autoGrade = async (req, res) => {
-  const { assignment_number, language, test_cases } = req.body;
+  const { assignment_number, language, test_cases, concurrency = 1 } = req.body;
   const { uid } = req;
 
   if (!assignment_number || !language || !test_cases) {
@@ -70,12 +73,16 @@ export const autoGrade = async (req, res) => {
     language,
     testCases: test_cases,
     uid,
+    CONCURRENCY: concurrency,
   });
 
   const answerRows = await buildAnswer({
     assignment,
     parser,
     schemaSet,
+    language,
+    testCases: test_cases,
+    uid,
   });
 
   const header = finalizeHeader(schemaSet);
@@ -86,7 +93,7 @@ export const autoGrade = async (req, res) => {
   const toCSVRow = (r) => [
     r.row_id,
     r.score,
-    r.validation,
+    r.scale,
     ...header.slice(3).map((k) => r.counter[k] || 0),
   ];
 
@@ -133,6 +140,8 @@ export const run = async (req, res) => {
 
   const normalizedPath = codePath.replace(/\\/g, "/");
   const absoluteCodePath = path.resolve(BASE_DIR, normalizedPath);
+  const tempDir = path.resolve(BASE_DIR, "temp", uid);
+  const hostTempDir = path.join(HOST_BASE_DIR, "temp", uid).replace(/\\/g, "/");
 
   if (!fs.existsSync(absoluteCodePath)) {
     return res.status(404).json({
@@ -180,8 +189,6 @@ export const run = async (req, res) => {
       });
   }
 
-  const tempDir = path.resolve(BASE_DIR, "temp", uid);
-  const hostTempDir = path.join(HOST_BASE_DIR, "temp", uid).replace(/\\/g, "/");
   const sourcePath = path.join(tempDir, filename);
 
   if (fs.existsSync(sourcePath)) {
@@ -192,6 +199,8 @@ export const run = async (req, res) => {
   fs.writeFileSync(sourcePath, codeContent);
 
   const containerName = `sandbox_${uid}`;
+
+  await asyncExec(`docker rm -f ${containerName}`);
 
   const dockerArgs = [
     "run",
@@ -225,6 +234,11 @@ export const run = async (req, res) => {
 
   let output = "";
   let isFinished = false;
+  let ptyAlive = true;
+
+  ptyProcess.onExit(() => {
+    ptyAlive = false;
+  });
 
   const formatOutput = (raw) => {
     return raw
@@ -239,7 +253,7 @@ export const run = async (req, res) => {
   ptyProcess.onData((data) => {
     output += data;
 
-    if (inputQueue.length > 0 && currentIdx < inputQueue.length) {
+    if (inputQueue.length > 0 && currentIdx < inputQueue.length && ptyAlive) {
       ptyProcess.write(`${inputQueue[currentIdx]}\r`);
 
       currentIdx++;
@@ -247,21 +261,39 @@ export const run = async (req, res) => {
   });
 
   const timeout = setTimeout(() => {
-    if (!isFinished) {
+    try {
+      ptyProcess.kill();
+      exec(`docker rm -f ${containerName}`);
+    } catch (e) {
+      console.warn(`Container delete failed, ${e.message}`);
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: "Running code failed, Execution Timed Out",
+      output: "",
+    });
+  }, Math.min(Number(timeLimit) * 100, 10000));
+
+  const terminate = setTimeout(() => {
+    if (currentIdx == inputQueue.length) {
       isFinished = true;
+
+      clearTimeout(timeout);
 
       const currentOutput = formatOutput(output);
 
       try {
-        exec(`docker rm -f ${containerName}`);
         ptyProcess.kill();
-      } catch (e) {}
+        exec(`docker rm -f ${containerName}`);
+      } catch (e) {
+        console.warn(`Container delete failed, ${e.message}`);
+      }
 
       return res.status(200).json({
         success: true,
-        message: "Running code successfully, Execution Timed Out",
+        message: "Running code successfully",
         output: currentOutput,
-        isTimeout: true,
       });
     }
   }, Number(timeLimit));
@@ -270,16 +302,20 @@ export const run = async (req, res) => {
     if (isFinished) return;
 
     isFinished = true;
-    clearTimeout(timeout);
+    ptyAlive = false;
+
+    const hasError = exitCode !== 0 && output.toLowerCase().includes("error");
 
     const cleanOutput = formatOutput(output);
 
+    clearTimeout(terminate);
+    clearTimeout(timeout);
+
     return res.status(200).json({
       success: true,
-      message:
-        exitCode !== 0 && output.toLowerCase().includes("error")
-          ? "Execution/Compile Error"
-          : "",
+      message: hasError
+        ? "Execution/Compile Error"
+        : "Running code successfully",
       output: cleanOutput,
     });
   });

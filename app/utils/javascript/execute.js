@@ -1,27 +1,32 @@
 import fs from "fs";
 import path from "path";
-import pty from "node-pty";
+import { spawn } from "child_process";
 import { exec } from "child_process";
+import { promisify } from "util";
 
 const BASE_DIR = process.cwd();
 const HOST_BASE_DIR = process.env.HOST_PROJECT_PATH;
 
-export const executeCode = async ({
-  uid,
-  language,
-  codePath,
-  input = "",
-  timeLimit = 2000,
-  containerName = "sandbox",
-}) => {
-  return new Promise((resolve) => {
-    if (!language || !codePath || !uid) {
-      return resolve({
-        success: false,
-        message: "Running code failed, field cannot be empty",
-      });
-    }
+const asyncExec = promisify(exec);
 
+export const executeCode = async (param) => {
+  const { uid, language, codePath } = param;
+  const { input = "", timeLimit = 5000, containerName = "sandbox" } = param;
+
+  try {
+    await asyncExec(`docker rm -f ${containerName}`);
+  } catch (e) {
+    console.warn(`Container delete failed, ${e.message}`);
+  }
+
+  if (!language || !codePath || !uid) {
+    return resolve({
+      success: false,
+      message: "Running code failed, field cannot be empty",
+    });
+  }
+
+  return new Promise((resolve) => {
     const normalizedPath = codePath.replace(/\\/g, "/");
     const absoluteCodePath = path.resolve(BASE_DIR, normalizedPath);
 
@@ -41,15 +46,16 @@ export const executeCode = async ({
     }
 
     let filename, compileRunCmd;
+    const limitS = timeLimit / 1000;
 
     switch (language) {
       case "c":
         filename = `${containerName}.c`;
-        compileRunCmd = `gcc ${containerName}.c -o ${containerName} && stdbuf -i0 -o0 -e0 ./${containerName}`;
+        compileRunCmd = `gcc ${containerName}.c -o ${containerName} && timeout 1s stdbuf -i0 -o0 -e0 ./${containerName}`;
         break;
       case "cpp":
         filename = `${containerName}.cpp`;
-        compileRunCmd = `g++ ${containerName}.cpp -o ${containerName} && stdbuf -i0 -o0 -e0 ./${containerName}`;
+        compileRunCmd = `g++ ${containerName}.cpp -o ${containerName} && timeout 1s stdbuf -i0 -o0 -e0 ./${containerName}`;
         break;
       case "java":
         const classMatch = codeContent.match(
@@ -58,11 +64,11 @@ export const executeCode = async ({
         const className = classMatch ? classMatch[1] : "Main";
 
         filename = `${className}.java`;
-        compileRunCmd = `javac ${filename} && exec java ${className}`;
+        compileRunCmd = `javac ${filename} && timeout 1s stdbuf -i0 -o0 -e0 java ${className}`;
         break;
       case "python":
         filename = "main.py";
-        compileRunCmd = "python3 -u main.py";
+        compileRunCmd = `timeout 1s stdbuf -i0 -o0 -e0 python3 -u main.py`;
         break;
       default:
         return resolve({
@@ -84,102 +90,99 @@ export const executeCode = async ({
     fs.mkdirSync(tempDir, { recursive: true });
     fs.writeFileSync(sourcePath, codeContent);
 
+    (async () => {
+      await new Promise((r) => setTimeout(r, 500));
+    })();
+
     const dockerArgs = [
       "run",
       "--rm",
       "--name",
       `${containerName}`,
       "-i",
-      "-t",
       "--user",
       "root",
       "--cpus=1",
-      "--memory=512m",
+      "--memory=128m",
       "--network=none",
       "-v",
       `${hostTempDir}:/app`,
       "-w",
       "/app",
       "coderun-modern-lms-sandbox",
-      "bash",
+      "sh",
       "-c",
       compileRunCmd,
     ];
 
-    const ptyProcess = pty.spawn("docker", dockerArgs, {
-      name: "xterm-color",
-      cols: 80,
-      rows: 30,
-      cwd: process.cwd(),
-      env: process.env,
+    const dockerProcess = spawn("docker", dockerArgs, {
+      stdio: ["pipe", "pipe", "pipe"],
     });
+
+    if (input && input.length > 0) {
+      dockerProcess.stdin.write(input.trim() + "\n");
+    }
 
     let output = "";
     let isFinished = false;
 
-    const formatOutput = (raw) => {
-      return raw
-        .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
-        .replace(/\r\n/g, "\n")
-        .trim();
-    };
+    const MAX_OUTPUT = 512 * 1024; // 512KB
 
-    const inputQueue = input ? input.trim().split(/\s+/) : [];
-    let currentIdx = 0;
-
-    ptyProcess.onData((data) => {
-      output += data;
-
-      if (inputQueue.length > 0 && currentIdx < inputQueue.length) {
-        ptyProcess.write(`${inputQueue[currentIdx]}\r`);
-
-        currentIdx++;
+    dockerProcess.stdout.on("data", (d) => {
+      if (output.length < MAX_OUTPUT) {
+        output += d.toString();
       }
     });
 
+    dockerProcess.stderr.on("data", (data) => {
+      output += data.toString();
+    });
+
     const timeout = setTimeout(() => {
-      if (!isFinished) {
-        isFinished = true;
+      if (isFinished) return;
+      isFinished = true;
 
-        const currentOutput = formatOutput(output);
+      const cleanOutput = output
+        .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
+        .replace(/\r\n/g, "\n")
+        .trim();
 
-        try {
-          setTimeout(() => {
-            exec(`docker rm -f ${containerName}`);
-          }, Number(timeLimit));
+      dockerProcess.kill("SIGTERM");
+      exec(`docker rm -f ${containerName}`);
 
-          ptyProcess.kill();
-        } catch (e) {}
+      resolve({
+        success: false,
+        message: "Running code failed, Execution Timed Out",
+        output: cleanOutput,
+      });
+    }, Math.max(Number(timeLimit), 5000));
 
-        resolve({
-          success: true,
-          message: "Running code successfully, Execution Timed Out",
-          output: currentOutput,
-          isTimeout: true,
-        });
-      }
-    }, Number(timeLimit));
-
-    ptyProcess.onExit(({ exitCode }) => {
+    dockerProcess.on("close", (exitCode) => {
       if (isFinished) return;
 
       isFinished = true;
+
+      let status = "OK";
+
+      if (exitCode === 124) {
+        status = "Time Limit Exceeded";
+      } else if (exitCode !== 0) {
+        status = "Runtime Error";
+      }
+
       clearTimeout(timeout);
 
-      const cleanOutput = formatOutput(output);
-
-      try {
-        setTimeout(() => {
-          exec(`docker rm -f ${containerName}`);
-        }, Number(timeLimit));
-      } catch (e) {}
+      const cleanOutput = output
+        .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
+        .replace(/\r\n/g, "\n")
+        .trim();
 
       resolve({
-        success: true,
+        success: exitCode === 0,
         message:
-          exitCode !== 0 && output.toLowerCase().includes("error")
-            ? "Execution/Compile Error"
-            : "",
+          exitCode === 0
+            ? "Running code successfully"
+            : "Execution/Compile Error",
         output: cleanOutput,
       });
     });

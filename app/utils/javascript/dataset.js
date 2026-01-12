@@ -1,16 +1,18 @@
 import fs from "fs";
 import path from "path";
+import pLimit from "p-limit";
 import { parseCode } from "./parser.js";
-import { calculateScore, SBCAM, SEDM, STCAM } from "./score.js";
+import { SBCAM, SEDM, STCAM } from "./nodeCalculator.js";
 import { deduplicateDataset, extendSchema } from "./schema.js";
 import { runTestCasesForFile } from "./testcaseRunner.js";
 import { executeCode } from "./execute.js";
-import { determineTaskLabel } from "./validation.js";
+import { scaling, scoring } from "./determineLabel.js";
 
 const BASE_DIR = process.cwd();
 
 export async function buildDataset(param) {
-  const { assignment, parser, schemaSet, language, testCases, uid } = param;
+  const { assignment, uid, schemaSet, language } = param;
+  const { testCases, parser, CONCURRENCY = 1 } = param;
 
   const datasetDir = path
     .join(BASE_DIR, "database/resource", language)
@@ -25,61 +27,99 @@ export async function buildDataset(param) {
     throw new Error("Automatic grading failed, Answer key not found");
   }
 
-  extendSchema(schemaSet, keyCounter);
+  await extendSchema(schemaSet, keyCounter);
 
   const rows = [];
   rows.push({
     row_id: "key",
     score: 100,
-    validation: "valid",
+    scale: "high",
     counter: keyCounter,
   });
 
   const expected = {};
   for (const tc of testCases) {
+    console.log(`User: ${uid} - ${tc.name} execute`);
+
     const result = await executeCode({
       uid,
       language,
       codePath: keyPath,
       input: tc.input || "",
+      containerName: `sandbox-dataset-${uid}-${tc.name}`,
     });
 
     expected[tc.name] = result.output?.trim();
   }
 
-  let rowId = 1;
-  for (const file of fs.readdirSync(datasetDir)) {
-    if (!file.endsWith(`.${language}`)) continue;
+  console.log(`User: ${uid} - Dataset labelling start:`);
 
-    const counter = parseCode(parser, path.join(datasetDir, file));
+  const limit = pLimit(CONCURRENCY);
+  const files = fs.readdirSync(datasetDir);
 
-    if (!counter) continue;
+  const tasks = files.map((file, idx) =>
+    limit(async () => {
+      const rowId = idx + 1;
+      const filePath = path.join(datasetDir, file);
 
-    extendSchema(schemaSet, counter);
+      const interval = Math.max(1, Math.floor(files.length / 10));
+      if (rowId % interval === 0 || rowId === 1 || rowId === files.length) {
+        console.log(
+          `User: ${uid} - Dataset labelling process... ${rowId}/${files.length}`
+        );
+      }
 
-    const filePath = path.join(datasetDir, file);
+      const counter = parseCode(parser, filePath);
+      if (!counter) return null;
 
-    const testCaseResult = await runTestCasesForFile({
-      uid,
-      language,
-      codePath: filePath,
-      expected,
-      testCases,
-      containerName: `sandbox-${uid}-${rowId}`,
-    });
+      const testCaseResult = await runTestCasesForFile({
+        uid,
+        language,
+        codePath: filePath,
+        expected,
+        testCases,
+        containerName: `sandbox-dataset-${uid}-${rowId}`,
+      });
 
-    const sbcamResult = await SBCAM(keyCounter, counter);
-    const stcamResult = await STCAM(testCaseResult);
-    const sedmResult = await SEDM(counter);
+      return {
+        row_id: rowId,
+        counter,
+        testCaseResult,
+        filePath,
+      };
+    })
+  );
+
+  const intermediateResults = (await Promise.all(tasks)).filter(Boolean);
+
+  for (const r of intermediateResults) {
+    extendSchema(schemaSet, r.counter);
+  }
+
+  for (const r of intermediateResults) {
+    const sbcamScore = await SBCAM(keyCounter, r.counter);
+    const sedmScore = await SEDM(r.counter);
+    const stcamScore = await STCAM(r.testCaseResult);
+
+    const scoreTemp = await scoring({ sbcamScore, stcamScore, sedmScore });
+    const scale = await scaling({ sbcamScore, stcamScore });
+    const score =
+      scale === "low"
+        ? Math.min(scoreTemp, 30)
+        : scale === "medium"
+        ? Math.max(scoreTemp, 30)
+        : Math.max(scoreTemp, 70);
 
     rows.push({
-      row_id: rowId++,
-      score: Math.round((sbcamResult + stcamResult + sedmResult) / 3),
-      validation: determineTaskLabel(testCaseResult, sbcamResult),
-      counter,
-      filePath,
+      row_id: r.row_id,
+      score,
+      scale,
+      counter: r.counter,
+      filePath: r.filePath,
     });
   }
 
-  return deduplicateDataset(rows);
+  console.log(`User: ${uid} - Dataset labelling finish!`);
+
+  return await deduplicateDataset(rows);
 }

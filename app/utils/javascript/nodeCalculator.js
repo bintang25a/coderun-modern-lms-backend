@@ -28,6 +28,7 @@ export async function SBCAM(key, answer) {
 
 export async function SEDM(answer) {
   const TOTAL_LINES = answer.TOTAL_LINES || 0;
+
   if (TOTAL_LINES <= 0) return 0;
 
   let totalErrors = 0;
@@ -65,16 +66,4 @@ export async function STCAM(answer) {
   if (totalWeight === 0) return 0;
 
   return Math.round((weightedPassSum / totalWeight) * 100);
-}
-
-export function calculateScore(key, answer, testCaseResult) {
-  const score = {
-    score1: SBCAM(key, answer),
-    score2: SEDM(answer),
-    score3: STCAM(testCaseResult),
-  };
-
-  console.log(score);
-
-  return (score.score1 + score.score1 + score.score1) / 3;
 }
