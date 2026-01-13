@@ -6,18 +6,71 @@ import CPP from "tree-sitter-cpp";
 import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
 import * as pty from "node-pty";
-import { exec } from "child_process";
-import { promisify } from "util";
-import { Assignment } from "../../database/models/Model.js";
+import { Assignment, Submission } from "../../database/models/Model.js";
 import { buildDataset } from "../utils/javascript/dataset.js";
 import { buildAnswer } from "../utils/javascript/answer.js";
 import { finalizeHeader } from "../utils/javascript/schema.js";
 import { writeCSV } from "../utils/javascript/csv.js";
+import { runPythonModel } from "../utils/javascript/modelling.js";
 
 const BASE_DIR = process.cwd();
-const HOST_BASE_DIR = process.env.HOST_PROJECT_PATH;
 
-const asyncExec = promisify(exec);
+export const grade = async (req, res) => {
+  const submission = await Submission.findOne({
+    where: {
+      submission_number: req.params.submission_number,
+      assignment_number: req.params.assignment_number,
+    },
+  });
+
+  if (!submission) {
+    return res.status(404).json({
+      success: false,
+      message: "Grading submission failed, Submission not found",
+    });
+  }
+
+  const { grade } = req.body;
+
+  if (!grade) {
+    return res.status(400).json({
+      success: false,
+      message: "Grading submission failed, Field cannot empty",
+    });
+  }
+
+  if (!req.uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Grading submission failed, User unknown",
+    });
+  }
+
+  try {
+    await Submission.update(
+      {
+        grade,
+        assistant_uid: req.uid,
+      },
+      {
+        where: {
+          submission_number: req.params.submission_number,
+        },
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Grading submission successfully",
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Grading submission failed",
+    });
+  }
+};
 
 export const autoGrade = async (req, res) => {
   const { assignment_number, language } = req.body;
@@ -58,6 +111,8 @@ export const autoGrade = async (req, res) => {
       message: "Automatic grading failed, Assignment not found",
     });
   }
+
+  console.log(`User: ${uid} - Starting auto grade`);
 
   const parser = new Parser();
   if (language === "c") {
@@ -108,13 +163,13 @@ export const autoGrade = async (req, res) => {
     ...header.slice(3).map((k) => r.counter[k] || 0),
   ];
 
-  writeCSV(
+  await writeCSV(
     path.join(outputDir, `DATASET_${assignment_number}.csv`),
     header,
     datasetRows.map(toCSVRow)
   );
 
-  writeCSV(
+  await writeCSV(
     path.join(outputDir, `ANSWER_${assignment_number}.csv`),
     header,
     answerRows.map(toCSVRow)
@@ -130,10 +185,11 @@ export const autoGrade = async (req, res) => {
     }
   });
 
-  // Path
+  // Dataset and Result path
+  const modelPyPath = path.join(BASE_DIR, "app", "utils", "python", "model.py");
   const datasetPath = path.join(outputDir, `DATASET_${assignment_number}.csv`);
   const answerPath = path.join(outputDir, `ANSWER_${assignment_number}.csv`);
-  const modelPyPath = path.join(BASE_DIR, "app", "utils", "python", "model.py");
+  const resultPath = `${outputDir}/RESULT_${assignment_number}.json`;
 
   if (!fs.existsSync(modelPyPath)) {
     return res.status(400).json({
@@ -142,16 +198,46 @@ export const autoGrade = async (req, res) => {
     });
   }
 
-  // Baca isinya untuk diletakkan di tempDir agar bisa diakses Docker
-  const codeContent = fs.readFileSync(modelPyPath, "utf8");
-  const filename = "model.py";
-  const compileRunCmd = "python3 -u model.py";
+  try {
+    await runPythonModel({
+      modelPyPath,
+      datasetPath,
+      answerPath,
+      resultPath,
+    });
+
+    const submissionResult = await JSON.parse(
+      fs.readFileSync(resultPath, "utf8")
+    );
+
+    const uploadResult = await submissionResult.map((result) => {
+      Submission.update(
+        {
+          grade: result.score,
+          assistant_uid: req.uid,
+        },
+        {
+          where: {
+            submission_number: result.submission_number,
+          },
+        }
+      );
+    });
+
+    await Promise.all(uploadResult);
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Automatic grading failed, (AI model error)",
+      error: err.stderr || err.message || err,
+    });
+  }
+
+  console.log(`User: ${uid} - Auto grade finish`);
 
   return res.status(200).json({
     success: true,
     message: `Automatic grading successfully`,
-    dataset: datasetPath,
-    answer: answerPath,
   });
 };
 
@@ -285,207 +371,6 @@ export const run = async (req, res) => {
       success: true,
       message: "Running code successfully",
       output: clean(output),
-    });
-  });
-};
-
-export const run1 = async (req, res) => {
-  const { language, codePath, input = "", timeLimit = 5000 } = req.body;
-  const uid = req.uid;
-
-  if (!language || !codePath || !uid) {
-    return res.status(400).json({
-      success: false,
-      message: "Running code failed, field cannot be empty",
-    });
-  }
-
-  const normalizedPath = codePath.replace(/\\/g, "/");
-  const absoluteCodePath = path.resolve(BASE_DIR, normalizedPath);
-  const tempDir = path.resolve(BASE_DIR, "temp", uid);
-  const hostTempDir = path.join(HOST_BASE_DIR, "temp", uid).replace(/\\/g, "/");
-
-  if (!fs.existsSync(absoluteCodePath)) {
-    return res.status(404).json({
-      success: false,
-      message: `Running code failed, Source code not found`,
-    });
-  }
-
-  const codeContent = fs.readFileSync(absoluteCodePath, "utf8");
-  if (!codeContent.trim()) {
-    return res.status(400).json({
-      success: false,
-      message: "Running code failed, Source code is empty",
-    });
-  }
-
-  let filename, compileRunCmd;
-
-  switch (language) {
-    case "c":
-      filename = "main.c";
-      compileRunCmd = "gcc main.c -o app && stdbuf -i0 -o0 -e0 ./app";
-      break;
-    case "cpp":
-      filename = "main.cpp";
-      compileRunCmd = "g++ main.cpp -o app && stdbuf -i0 -o0 -e0 ./app";
-      break;
-    case "java":
-      const classMatch = codeContent.match(
-        /public\s+class\s+([a-zA-Z_$][a-zA-Z\d_$]*)/
-      );
-      const className = classMatch ? classMatch[1] : "Main";
-
-      filename = `${className}.java`;
-      compileRunCmd = `javac ${filename} && java -Djdk.console=java.base -Dsun.stdout.buffered=false ${className}`;
-      break;
-    case "python":
-      filename = "main.py";
-      compileRunCmd = "python3 -u main.py";
-      break;
-    default:
-      return res.status(400).json({
-        success: false,
-        message: "Running code failed, Language unsupported",
-      });
-  }
-
-  const sourcePath = path.join(tempDir, filename);
-
-  if (fs.existsSync(sourcePath)) {
-    fs.rmSync(sourcePath, { recursive: true, force: true });
-  }
-
-  fs.mkdirSync(tempDir, { recursive: true });
-  fs.writeFileSync(sourcePath, codeContent);
-
-  const containerName = `sandbox_${uid}`;
-
-  try {
-    await asyncExec(`docker rm -f ${containerName}`);
-  } catch (error) {
-    console.log(`${containerName} not found, Continue`);
-  }
-
-  const dockerArgs = [
-    "run",
-    "--rm",
-    "--name",
-    `${containerName}`,
-    "-i",
-    "-t",
-    "--user",
-    "root",
-    "--cpus=1",
-    "--memory=512m",
-    "--network=none",
-    "-v",
-    `${hostTempDir}:/app`,
-    "-w",
-    "/app",
-    "coderun-modern-lms-sandbox",
-    "bash",
-    "-c",
-    compileRunCmd,
-  ];
-
-  const ptyProcess = pty.spawn("docker", dockerArgs, {
-    name: "xterm-color",
-    cols: 80,
-    rows: 30,
-    cwd: process.cwd(),
-    env: process.env,
-  });
-
-  let output = "";
-  let isFinished = false;
-
-  const formatOutput = (raw) => {
-    return raw
-      .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
-      .replace(/\r\n/g, "\n")
-      .trim();
-  };
-
-  const inputQueue = input ? input.trim().split(/\s+/) : [];
-  let currentIdx = 0;
-
-  const inputDelay =
-    language !== "java" ? 0 : Math.min(Math.max(timeLimit / 100, 50), 150);
-
-  ptyProcess.onData((data) => {
-    output += data;
-
-    setTimeout(() => {
-      const condition =
-        inputQueue.length > 0 && currentIdx < inputQueue.length && !isFinished;
-
-      if (condition) {
-        ptyProcess.write(`${inputQueue[currentIdx]}\r`);
-        currentIdx++;
-      }
-    }, Number(inputDelay));
-  });
-
-  const timeout = setTimeout(() => {
-    try {
-      ptyProcess.kill();
-      exec(`docker rm -f ${containerName}`);
-    } catch (e) {
-      console.warn(`Container delete failed, ${e.message}`);
-    }
-
-    const currentOutput = formatOutput(output);
-
-    return res.status(400).json({
-      success: false,
-      message: "Running code failed, Execution Timed Out",
-      output: currentOutput,
-    });
-  }, Math.min(Number(timeLimit) * 100, 20000));
-
-  const terminate = setTimeout(() => {
-    if (currentIdx == inputQueue.length) {
-      isFinished = true;
-
-      clearTimeout(timeout);
-
-      const currentOutput = formatOutput(output);
-
-      try {
-        ptyProcess.kill();
-        exec(`docker rm -f ${containerName}`);
-      } catch (e) {
-        console.warn(`Container delete failed, ${e.message}`);
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Running code successfully",
-        output: currentOutput,
-      });
-    }
-  }, Number(timeLimit));
-
-  ptyProcess.onExit(({ exitCode }) => {
-    if (isFinished) return;
-
-    isFinished = true;
-
-    const hasError = exitCode !== 0 && output.toLowerCase().includes("error");
-
-    const cleanOutput = formatOutput(output);
-
-    clearTimeout(terminate);
-    clearTimeout(timeout);
-
-    return res.status(200).json({
-      success: true,
-      message: hasError
-        ? "Execution/Compile Error"
-        : "Running code successfully",
-      output: cleanOutput,
     });
   });
 };

@@ -46,10 +46,10 @@ export async function buildDataset(param) {
       language,
       codePath: keyPath,
       input: tc.input || "",
-      executeName: `sandbox-dataset-${uid}-${tc.name}`,
+      executeName: `sandbox_key_${tc.name.trim()}`,
     });
 
-    console.log(`${tc.name}: ${result.output?.trim()}\n`);
+    console.log(result.output?.trim());
 
     expected[tc.name] = result.output?.trim();
   }
@@ -80,7 +80,7 @@ export async function buildDataset(param) {
         codePath: filePath,
         expected,
         testCases,
-        executeName: `sandbox-dataset-${uid}-${rowId}`,
+        executeName: `sandbox_dataset_${rowId}`,
       });
 
       return {
@@ -102,10 +102,6 @@ export async function buildDataset(param) {
     const sbcamScore = await SBCAM(keyCounter, r.counter);
     const sedmScore = await SEDM(r.counter);
     const stcamScore = await STCAM(r.testCaseResult);
-
-    console.log(
-      `SBCAM: ${sbcamScore}, SEDM: ${sedmScore}, STCAM ${stcamScore}`
-    );
 
     const scoreTemp = await scoring({ sbcamScore, stcamScore, sedmScore });
     const scale = await scaling({ sbcamScore, stcamScore });

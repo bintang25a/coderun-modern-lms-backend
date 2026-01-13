@@ -126,63 +126,6 @@ export const store = async (req, res) => {
   }
 };
 
-export const grade = async (req, res) => {
-  const submission = await Submission.findOne({
-    where: {
-      submission_number: req.params.submission_number,
-      assignment_number: req.params.assignment_number,
-    },
-  });
-
-  if (!submission) {
-    return res.status(404).json({
-      success: false,
-      message: "Grading submission failed, Submission not found",
-    });
-  }
-
-  const { grade } = req.body;
-
-  if (!grade) {
-    return res.status(400).json({
-      success: false,
-      message: "Grading submission failed, Field cannot empty",
-    });
-  }
-
-  if (!req.uid) {
-    return res.status(400).json({
-      success: false,
-      message: "Grading submission failed, User unknown",
-    });
-  }
-
-  try {
-    await Submission.update(
-      {
-        grade,
-        assistant_uid: req.uid,
-      },
-      {
-        where: {
-          submission_number: req.params.submission_number,
-        },
-      }
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Grading submission successfully",
-    });
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({
-      success: false,
-      message: "Grading submission failed",
-    });
-  }
-};
-
 export const update = async (req, res) => {
   const submission = await Submission.findOne({
     where: {

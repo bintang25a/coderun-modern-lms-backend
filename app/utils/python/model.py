@@ -11,16 +11,6 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    mean_absolute_error,
-    root_mean_squared_error,
-    r2_score,
-    classification_report,
-    confusion_matrix
-)
-
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 # ==============================
 # LOAD DATA
@@ -34,9 +24,6 @@ row_id = df.iloc[:, 0]
 y      = df.iloc[:, 1].astype(float)     # score
 scale  = df.iloc[:, 2].astype(str)       # high / medium / low
 X      = df.iloc[:, 3:].astype(float)    # AST features
-
-print("Row:", len(df))
-print("Col:", len(df.columns))
 
 # ==============================
 # CONFIG
@@ -159,46 +146,11 @@ y_eval = y[mask]
 y_pred = all_pred_scores[mask]
 
 # ==============================
-# REGRESSION REPORT
-# ==============================
-
-# Train-test-split
-print("\n========== REGRESSION REPORT ==========")
-print("MAE :", round(mean_absolute_error(y_eval, y_pred), COMMA))
-print("RMSE:", round(root_mean_squared_error(y_eval, y_pred), COMMA))
-print("R2  :", round(r2_score(y_eval, y_pred), COMMA))
-
-# ==============================
 # PASS / FAIL CLASSIFICATION
 # ==============================
 
 y_true_cls = np.where(y >= SCORE_PASS_TH, "Pass", "Fail")
 y_pred_cls = np.where(all_pred_scores >= SCORE_PASS_TH, "Pass", "Fail")
-
-print("\n========== CLASSIFICATION REPORT ==========")
-print(classification_report(y_true_cls, y_pred_cls))
-
-# ==============================
-# CONFUSION MATRIX
-# ==============================
-
-cm = confusion_matrix(y_true_cls, y_pred_cls, labels=["Fail", "Pass"])
-
-plt.figure(figsize=(6,5))
-sns.heatmap(
-    cm,
-    annot=True,
-    fmt="d",
-    cmap="Blues",
-    xticklabels=["Fail", "Pass"],
-    yticklabels=["Fail", "Pass"]
-)
-
-plt.xlabel("Predicted Label")
-plt.ylabel("True Label")
-plt.title("Confusion Matrix (Leave-One-Out KNN)")
-plt.tight_layout()
-plt.show()
 
 # ==============================
 # FINAL OUTPUT
@@ -218,8 +170,6 @@ output["true_score"] = output["true_score"].round(COMMA)
 output["pred_score"] = output["pred_score"].round(COMMA)
 output["distance"]   = output["distance"].round(COMMA)
 
-display(output)
-
 """**IMLEMENTASI**"""
 
 # ==============================
@@ -233,9 +183,6 @@ df_test = pd.read_csv(
     sep=None,
     engine="python",
 )
-
-print("Row:", len(df_test))
-print("Col:", len(df_test.columns))
 
 # ==============================
 # SPLIT KOLOM UTAMA & FITUR
@@ -299,16 +246,12 @@ for sc in ["high", "medium", "low"]:
 status = np.where(all_pred_scores >= SCORE_PASS_TH, "Pass", "Fail")
 
 output = pd.DataFrame({
-    "row_id": row_id,
+    "submission_number": row_id,
     "score": np.round(all_pred_scores, 2),
     "status": status
 })
 
-output.head()
-
-print(output)
-
-output_json_path = "/content/prediction_result.json"
+output_json_path = input("")
 
 with open(output_json_path, "w") as f:
     json.dump(output.to_dict(orient="records"), f, indent=2)

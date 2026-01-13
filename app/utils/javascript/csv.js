@@ -14,7 +14,7 @@ function escapeCSV(value, delimiter) {
   return str;
 }
 
-export function writeCSV(filePath, header, rows, delimiter = ",") {
+export async function writeCSV(filePath, header, rows, delimiter = ",") {
   const content = [
     header.map((h) => escapeCSV(h, delimiter)).join(delimiter),
     ...rows.map((row) =>

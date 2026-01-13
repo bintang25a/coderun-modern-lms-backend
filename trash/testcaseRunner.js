@@ -1,10 +1,10 @@
-import { executeCode } from "./execute.js";
+import { executeCode } from "../app/utils/javascript/execute.js";
 
 function normalize(code) {
   return code
-    .replace(/\/\/.*|\/\*[\s\S]*?\*\//g, "") // Hapus komentar
-    .replace(/\s+/g, "") // Hapus spasi & newline
-    .toLowerCase(); // Seragamkan huruf
+    .replace(/\/\/.*|\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, "")
+    .toLowerCase();
 }
 
 async function diceCoefficient(expected, actual) {

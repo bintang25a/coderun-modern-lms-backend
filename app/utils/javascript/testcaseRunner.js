@@ -6,7 +6,6 @@ async function lcsSimilarity(a, b) {
   const n = a.length;
   const m = b.length;
 
-  // Optimized DP (2 rows)
   let prev = new Uint16Array(m + 1);
   let curr = new Uint16Array(m + 1);
 
@@ -84,7 +83,6 @@ async function hybridSimilarity(expected, actual) {
 
   const len = expected.length;
 
-  // Bobot adaptif berdasarkan panjang output
   let wLCS = 0.5;
   let wCos = 0.3;
   let wLine = 0.2;
@@ -116,7 +114,7 @@ export async function runTestCasesForFile(param) {
       language,
       codePath,
       input: tc.input || "",
-      executeName: `${executeName}-${tc.name}`,
+      executeName: `${executeName}_${tc.name.trim()}`,
     }).then((actual) => ({
       tc,
       actual,
@@ -132,10 +130,6 @@ export async function runTestCasesForFile(param) {
     const similarity = await hybridSimilarity(expectedOutput, actualOutput);
     const threshold = 30;
     const pass = similarity >= threshold;
-
-    console.log(
-      `Score: ${similarity}\nLen: ${expectedOutput.length}\nExpected: ${expectedOutput}\nActual: ${actualOutput}`
-    );
 
     result[`TC>${tc.name}`] = pass;
     result[`TC_WEIGHT>${tc.name}`] = tc.weight || 1;

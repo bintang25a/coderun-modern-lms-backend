@@ -28,7 +28,7 @@ export async function buildAnswer(param) {
       language,
       codePath: keyPath,
       input: tc.input || "",
-      executeName: `sandbox-dataset-${uid}-${tc.name}`,
+      executeName: `sandbox_key_${tc.name.trim()}`,
     });
 
     expected[tc.name] = result.output?.trim();
@@ -68,7 +68,7 @@ export async function buildAnswer(param) {
     const interval = Math.max(1, Math.floor(files.length / 10));
     if (rowId % interval === 0 || rowId === 1 || rowId === files.length) {
       console.log(
-        `User: ${uid} - Dataset labelling process... ${rowId}/${files.length}`
+        `User: ${uid} - Answer labelling process... ${rowId}/${files.length}`
       );
     }
 

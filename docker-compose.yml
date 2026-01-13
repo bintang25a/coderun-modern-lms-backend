@@ -33,7 +33,6 @@ services:
       - .:/backend
       - ./public:/backend/public
       - /backend/node_modules
-      # - /var/run/docker.sock:/var/run/docker.sock
       - ./temp:/temp
     command: nodemon -L index.js
 

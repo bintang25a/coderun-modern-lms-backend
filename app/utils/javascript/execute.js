@@ -81,9 +81,8 @@ export const executeCode = async (param) => {
       };
   }
 
-  const sourcePath = path.join(tempDir, filename);
-
   if (language !== "java") {
+    const sourcePath = path.join(tempDir, filename);
     fs.writeFileSync(sourcePath, codeContent);
   }
 
@@ -98,27 +97,24 @@ export const executeCode = async (param) => {
     let finished = false;
     const MAX_OUTPUT = 512 * 1024;
 
-    // ===== STDOUT =====
     child.stdout.on("data", (data) => {
       if (output.length < MAX_OUTPUT) {
         output += data.toString();
       }
     });
 
-    // ===== STDERR =====
-    child.stderr.on("data", (data) => {
-      if (output.length < MAX_OUTPUT) {
-        output += data.toString();
+    const inputQueue = input ? input.trim().split(/\s+/) : [];
+
+    if (Array.isArray(inputQueue)) {
+      for (const input of inputQueue) {
+        child.stdin.write(String(input) + "\n");
       }
-    });
-
-    // ===== INPUT =====
-    if (input && input.length > 0) {
-      child.stdin.write(input.trim() + "\n");
     }
-    child.stdin.end();
 
-    // ===== TIMEOUT =====
+    // if (input && input.length > 0) {
+    //   child.stdin.write(input.trim() + "\n");
+    // }
+
     const timer = setTimeout(() => {
       if (finished) return;
       finished = true;
@@ -132,7 +128,6 @@ export const executeCode = async (param) => {
       });
     }, Math.min(Number(timeLimit), 20000));
 
-    // ===== EXIT =====
     child.on("close", (code) => {
       if (finished) return;
       finished = true;
@@ -150,7 +145,6 @@ export const executeCode = async (param) => {
   });
 };
 
-// ===== HELPER =====
 function cleanOutput(raw) {
   return raw
     .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
