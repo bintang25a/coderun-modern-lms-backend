@@ -1,6 +1,33 @@
 import { executeCode } from "./execute.js";
 
-async function outputSimilarity(expected, actual) {
+function normalize(code) {
+  return code
+    .replace(/\/\/.*|\/\*[\s\S]*?\*\//g, "") // Hapus komentar
+    .replace(/\s+/g, "") // Hapus spasi & newline
+    .toLowerCase(); // Seragamkan huruf
+}
+
+async function diceCoefficient(expected, actual) {
+  const getBigrams = (str) => {
+    const bigrams = new Set();
+    for (let i = 0; i < str.length - 1; i++) {
+      bigrams.add(str.substring(i, i + 2));
+    }
+    return bigrams;
+  };
+
+  const s1 = getBigrams(normalize(expected));
+  const s2 = getBigrams(normalize(actual));
+
+  let intersection = 0;
+  for (let bit of s1) {
+    if (s2.has(bit)) intersection++;
+  }
+
+  return Math.round(((2 * intersection) / (s1.size + s2.size)) * 100);
+}
+
+async function levenshteinDistance(expected, actual) {
   if (expected === actual) return 100;
   if (!expected || !actual) return 0;
 
@@ -26,7 +53,17 @@ async function outputSimilarity(expected, actual) {
   const distance = prevRow[m];
   const maxLength = Math.max(n, m);
 
-  return Math.ceil(((maxLength - distance) / maxLength) * 100);
+  return Math.round(((maxLength - distance) / maxLength) * 100);
+}
+
+async function jaccardSimilarity(expected, actual) {
+  const set1 = new Set(expected.split(/\W+/));
+  const set2 = new Set(actual.split(/\W+/));
+
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
+  const union = new Set([...set1, ...set2]);
+
+  return Math.round((intersection.size / union.size) * 100);
 }
 
 export async function runTestCasesForFile(param) {
@@ -52,11 +89,13 @@ export async function runTestCasesForFile(param) {
     const expectedOutput = expected[tc.name]?.trim() ?? "";
     const actualOutput = actual.output?.trim() ?? "";
 
-    const similarity = await outputSimilarity(expectedOutput, actualOutput);
+    const similarity = await diceCoefficient(expectedOutput, actualOutput);
     const threshold = 30;
     const pass = similarity >= threshold;
 
-    console.log(`Expected: ${expectedOutput}\nActual: ${actualOutput}`);
+    console.log(
+      `Score: ${similarity}\nExpected: ${expectedOutput}\nActual: ${actualOutput}`
+    );
 
     result[`TC>${tc.name}`] = pass;
     result[`TC_WEIGHT>${tc.name}`] = tc.weight || 1;

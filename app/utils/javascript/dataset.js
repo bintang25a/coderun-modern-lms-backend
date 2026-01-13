@@ -49,6 +49,8 @@ export async function buildDataset(param) {
       containerName: `sandbox-dataset-${uid}-${tc.name}`,
     });
 
+    console.log(`${tc.name}: ${result.output?.trim()}\n`);
+
     expected[tc.name] = result.output?.trim();
   }
 
@@ -100,6 +102,10 @@ export async function buildDataset(param) {
     const sbcamScore = await SBCAM(keyCounter, r.counter);
     const sedmScore = await SEDM(r.counter);
     const stcamScore = await STCAM(r.testCaseResult);
+
+    console.log(
+      `SBCAM: ${sbcamScore}, SEDM: ${sedmScore}, STCAM ${stcamScore}`
+    );
 
     const scoreTemp = await scoring({ sbcamScore, stcamScore, sedmScore });
     const scale = await scaling({ sbcamScore, stcamScore });

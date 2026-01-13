@@ -96,6 +96,20 @@ export default async function SubmissionSeeder() {
       answer: "public\\assignments\\IF23A1-01\\U003.java",
       grade: null,
     },
+    {
+      submission_number: "U004-20251104062613172",
+      assignment_number: "IF23A1-01",
+      student_uid: "U004",
+      answer: "public\\assignments\\IF23A1-01\\U004.java",
+      grade: null,
+    },
+    {
+      submission_number: "U005-20251104062613172",
+      assignment_number: "IF23A1-01",
+      student_uid: "U005",
+      answer: "public\\assignments\\IF23A1-01\\U005.java",
+      grade: null,
+    },
   ];
 
   const databasePath = path.resolve("database");

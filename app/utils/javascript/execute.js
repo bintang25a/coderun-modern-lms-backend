@@ -64,8 +64,7 @@ export const executeCode = async (param) => {
         const className = classMatch ? classMatch[1] : "Main";
 
         filename = `${className}.java`;
-        // compileRunCmd = `javac ${filename} && timeout 1s stdbuf -i0 -o0 -e0 java ${className}`;
-        compileRunCmd = `javac ${filename} && exec java ${className}`;
+        compileRunCmd = `javac ${filename} && java -Djdk.console=java.base -Dsun.stdout.buffered=false ${className}`;
         break;
       case "python":
         filename = "main.py";
@@ -127,7 +126,7 @@ export const executeCode = async (param) => {
     let output = "";
     let isFinished = false;
 
-    const MAX_OUTPUT = 512 * 1024; // 512KB
+    const MAX_OUTPUT = 512 * 1024;
 
     dockerProcess.stdout.on("data", (d) => {
       if (output.length < MAX_OUTPUT) {

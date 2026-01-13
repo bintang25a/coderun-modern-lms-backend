@@ -276,7 +276,9 @@ export const run = async (req, res) => {
   const inputQueue = input ? input.trim().split(/\s+/) : [];
   let currentIdx = 0;
 
-  const inputDelay = language !== "java" ? 0 : 100;
+  const inputDelay =
+    language !== "java" ? 0 : Math.min(Math.max(timeLimit / 100, 50), 150);
+
   ptyProcess.onData((data) => {
     output += data;
 
@@ -299,12 +301,14 @@ export const run = async (req, res) => {
       console.warn(`Container delete failed, ${e.message}`);
     }
 
+    const currentOutput = formatOutput(output);
+
     return res.status(400).json({
       success: false,
       message: "Running code failed, Execution Timed Out",
-      output: "",
+      output: currentOutput,
     });
-  }, Math.min(Number(timeLimit) * 100, 60000));
+  }, Math.min(Number(timeLimit) * 100, 20000));
 
   const terminate = setTimeout(() => {
     if (currentIdx == inputQueue.length) {
