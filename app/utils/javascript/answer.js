@@ -28,7 +28,7 @@ export async function buildAnswer(param) {
       language,
       codePath: keyPath,
       input: tc.input || "",
-      containerName: `sandbox-dataset-${uid}-${tc.name}`,
+      executeName: `sandbox-dataset-${uid}-${tc.name}`,
     });
 
     expected[tc.name] = result.output?.trim();
@@ -55,7 +55,7 @@ export async function buildAnswer(param) {
       codePath: filePath,
       expected,
       testCases,
-      containerName: `sandbox-answer-${uid}-${rowId++}`,
+      executeName: `sandbox-answer-${uid}-${rowId++}`,
     });
 
     const sbcamScore = await SBCAM(keyCounter, counter);

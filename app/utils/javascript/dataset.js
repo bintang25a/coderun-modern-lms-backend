@@ -46,7 +46,7 @@ export async function buildDataset(param) {
       language,
       codePath: keyPath,
       input: tc.input || "",
-      containerName: `sandbox-dataset-${uid}-${tc.name}`,
+      executeName: `sandbox-dataset-${uid}-${tc.name}`,
     });
 
     console.log(`${tc.name}: ${result.output?.trim()}\n`);
@@ -80,7 +80,7 @@ export async function buildDataset(param) {
         codePath: filePath,
         expected,
         testCases,
-        containerName: `sandbox-dataset-${uid}-${rowId}`,
+        executeName: `sandbox-dataset-${uid}-${rowId}`,
       });
 
       return {

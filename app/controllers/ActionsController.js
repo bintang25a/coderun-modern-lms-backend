@@ -130,13 +130,10 @@ export const autoGrade = async (req, res) => {
     }
   });
 
-  const modelPyPath = path.join(
-    BASE_DIR,
-    "controllers",
-    "utils",
-    "python",
-    "model.py"
-  );
+  // Path
+  const datasetPath = path.join(outputDir, `DATASET_${assignment_number}.csv`);
+  const answerPath = path.join(outputDir, `ANSWER_${assignment_number}.csv`);
+  const modelPyPath = path.join(BASE_DIR, "app", "utils", "python", "model.py");
 
   if (!fs.existsSync(modelPyPath)) {
     return res.status(400).json({
@@ -153,12 +150,146 @@ export const autoGrade = async (req, res) => {
   return res.status(200).json({
     success: true,
     message: `Automatic grading successfully`,
-    dataset: path.join(outputDir, `DATASET_${assignment_number}.csv`),
-    answer: path.join(outputDir, `ANSWER_${assignment_number}.csv`),
+    dataset: datasetPath,
+    answer: answerPath,
   });
 };
 
 export const run = async (req, res) => {
+  const { language, codePath, input = "", timeLimit = 5000 } = req.body;
+  const uid = req.uid;
+
+  if (!language || !codePath || !uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Running code failed, field cannot be empty",
+    });
+  }
+
+  const normalizedPath = codePath.replace(/\\/g, "/");
+  const absoluteCodePath = path.resolve(BASE_DIR, normalizedPath);
+  const tempDir = path.resolve(BASE_DIR, "temp", uid);
+
+  if (!fs.existsSync(absoluteCodePath)) {
+    return res.status(404).json({
+      success: false,
+      message: "Running code failed, Source code not found",
+      path: absoluteCodePath,
+    });
+  }
+
+  const codeContent = fs.readFileSync(absoluteCodePath, "utf8");
+  if (!codeContent.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "Running code failed, Source code is empty",
+      path: codeContent,
+    });
+  }
+
+  fs.mkdirSync(tempDir, { recursive: true });
+
+  let filename, command;
+
+  switch (language) {
+    case "c":
+      filename = "main.c";
+      command = "gcc main.c -o app && stdbuf -i0 -o0 -e0 ./app";
+      break;
+
+    case "cpp":
+      filename = "main.cpp";
+      command = "g++ main.cpp -o app && stdbuf -i0 -o0 -e0 ./app";
+      break;
+
+    case "java": {
+      const match = codeContent.match(/public\s+class\s+(\w+)/);
+      const className = match ? match[1] : "Main";
+      filename = `${className}.java`;
+      command = `javac ${filename} && java -Dsun.stdout.buffered=false ${className}`;
+      break;
+    }
+
+    case "python":
+      filename = "main.py";
+      command = "python3 -u main.py";
+      break;
+
+    default:
+      return res.status(400).json({
+        success: false,
+        message: "Running code failed, Unsupported language",
+      });
+  }
+
+  const sourcePath = path.join(tempDir, filename);
+  fs.writeFileSync(sourcePath, codeContent);
+
+  const ptyProcess = pty.spawn("bash", ["-c", command], {
+    cwd: tempDir,
+    env: process.env,
+    name: "xterm-color",
+    cols: 80,
+    rows: 30,
+  });
+
+  let output = "";
+  let finished = false;
+
+  const clean = (s) =>
+    s
+      .replace(/\x1B\[[0-9;]*m/g, "")
+      .replace(/\r\n/g, "\n")
+      .trim();
+
+  const inputQueue = input ? input.trim().split(/\s+/) : [];
+  let idx = 0;
+
+  const inputDelay =
+    language !== "java" ? 0 : Math.min(Math.max(timeLimit / 100, 50), 150);
+
+  ptyProcess.onData((data) => {
+    output += data;
+
+    setTimeout(() => {
+      const condition =
+        inputQueue.length > 0 && idx < inputQueue.length && !finished;
+
+      if (condition) {
+        ptyProcess.write(`${inputQueue[idx]}\r`);
+        idx++;
+      }
+    }, Number(inputDelay));
+  });
+
+  const timer = setTimeout(() => {
+    if (!finished) {
+      finished = true;
+      ptyProcess.kill();
+
+      return res.status(408).json({
+        success: false,
+        message: "Running code successfully, Execution timed out",
+        output: clean(output),
+      });
+    }
+  }, Math.min(timeLimit, 20000));
+
+  ptyProcess.onExit(() => {
+    if (finished) return;
+
+    finished = true;
+    clearTimeout(timer);
+
+    return res.status(200).json({
+      success: true,
+      message: "Running code successfully",
+      output: clean(output),
+    });
+  });
+};
+
+export const run1 = async (req, res) => {
   const { language, codePath, input = "", timeLimit = 5000 } = req.body;
   const uid = req.uid;
 
@@ -231,7 +362,11 @@ export const run = async (req, res) => {
 
   const containerName = `sandbox_${uid}`;
 
-  await asyncExec(`docker rm -f ${containerName}`);
+  try {
+    await asyncExec(`docker rm -f ${containerName}`);
+  } catch (error) {
+    console.log(`${containerName} not found, Continue`);
+  }
 
   const dockerArgs = [
     "run",
