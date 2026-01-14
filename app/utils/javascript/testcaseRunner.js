@@ -83,13 +83,13 @@ async function hybridSimilarity(expected, actual) {
 
   const len = expected.length;
 
-  let wLCS = 0.5;
-  let wCos = 0.3;
+  let wLCS = 0.3;
+  let wCos = 0.5;
   let wLine = 0.2;
 
   if (len < 150) {
-    wLCS = 0.7;
-    wCos = 0.2;
+    wLCS = 0.2;
+    wCos = 0.7;
     wLine = 0.1;
   } else if (len > 500) {
     wLCS = 0.4;
@@ -105,7 +105,8 @@ async function hybridSimilarity(expected, actual) {
 }
 
 export async function runTestCasesForFile(param) {
-  const { uid, language, codePath, expected, testCases, executeName } = param;
+  const { uid, language, codePath, expected } = param;
+  const { testCases, executeName, timeLimit } = param;
 
   const result = {};
   const executions = await testCases.map((tc) =>
@@ -115,6 +116,7 @@ export async function runTestCasesForFile(param) {
       codePath,
       input: tc.input || "",
       executeName: `${executeName}_${tc.name.trim()}`,
+      timeLimit,
     }).then((actual) => ({
       tc,
       actual,

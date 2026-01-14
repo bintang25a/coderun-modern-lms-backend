@@ -12,7 +12,7 @@ const BASE_DIR = process.cwd();
 
 export async function buildDataset(param) {
   const { assignment, uid, schemaSet, language } = param;
-  const { testCases, parser, CONCURRENCY = 1 } = param;
+  const { testCases, parser, CONCURRENCY = 1, timeLimit } = param;
 
   const datasetDir = path
     .join(BASE_DIR, "database/resource", language)
@@ -47,6 +47,7 @@ export async function buildDataset(param) {
       codePath: keyPath,
       input: tc.input || "",
       executeName: `sandbox_key_${tc.name.trim()}`,
+      timeLimit,
     });
 
     console.log(result.output?.trim());
@@ -81,6 +82,7 @@ export async function buildDataset(param) {
         expected,
         testCases,
         executeName: `sandbox_dataset_${rowId}`,
+        timeLimit,
       });
 
       return {

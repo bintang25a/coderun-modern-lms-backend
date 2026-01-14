@@ -9,7 +9,8 @@ import { runTestCasesForFile } from "./testcaseRunner.js";
 const BASE_DIR = process.cwd();
 
 export async function buildAnswer(param) {
-  const { assignment, parser, testCases, schemaSet, uid, language } = param;
+  const { assignment, parser, testCases, schemaSet, uid, language, timeLimit } =
+    param;
 
   const keyPath = path
     .join(BASE_DIR, assignment.answer_key)
@@ -29,6 +30,7 @@ export async function buildAnswer(param) {
       codePath: keyPath,
       input: tc.input || "",
       executeName: `sandbox_key_${tc.name.trim()}`,
+      timeLimit,
     });
 
     expected[tc.name] = result.output?.trim();
@@ -56,6 +58,7 @@ export async function buildAnswer(param) {
       expected,
       testCases,
       executeName: `sandbox-answer-${uid}-${rowId++}`,
+      timeLimit,
     });
 
     const sbcamScore = await SBCAM(keyCounter, counter);

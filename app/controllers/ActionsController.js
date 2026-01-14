@@ -74,10 +74,10 @@ export const grade = async (req, res) => {
 
 export const autoGrade = async (req, res) => {
   const { assignment_number, language } = req.body;
-  const { test_cases, concurrency = 1 } = req.body;
+  const { test_cases, concurrency = 1, timeLimit } = req.body;
   const { uid } = req;
 
-  if (!assignment_number || !language) {
+  if (!assignment_number || !language || !timeLimit) {
     return res.status(400).json({
       success: false,
       message: "Automatic grading failed, Field cannot empty",
@@ -139,6 +139,7 @@ export const autoGrade = async (req, res) => {
     language,
     testCases,
     uid,
+    timeLimit,
     CONCURRENCY: concurrency,
   });
 
@@ -149,6 +150,7 @@ export const autoGrade = async (req, res) => {
     language,
     testCases,
     uid,
+    timeLimit,
   });
 
   const header = finalizeHeader(schemaSet);
