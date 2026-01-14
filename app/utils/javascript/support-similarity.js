@@ -1,5 +1,3 @@
-import { executeCode } from "./execute.js";
-
 async function lcsSimilarity(a, b) {
   if (!a || !b) return 0;
 
@@ -78,18 +76,18 @@ async function lineSimilarity(a, b) {
   return Math.round((matched / maxLines) * 100);
 }
 
-async function hybridSimilarity(expected, actual) {
+export const hybridSimilarity = async (expected, actual) => {
   if (!expected || !actual) return 0;
 
   const len = expected.length;
 
-  let wLCS = 0.3;
-  let wCos = 0.5;
+  let wLCS = 0.5;
+  let wCos = 0.3;
   let wLine = 0.2;
 
   if (len < 150) {
-    wLCS = 0.2;
-    wCos = 0.7;
+    wLCS = 0.7;
+    wCos = 0.2;
     wLine = 0.1;
   } else if (len > 500) {
     wLCS = 0.4;
@@ -102,40 +100,4 @@ async function hybridSimilarity(expected, actual) {
   const line = await lineSimilarity(expected, actual);
 
   return Math.round(lcs * wLCS + cos * wCos + line * wLine);
-}
-
-export async function runTestCasesForFile(param) {
-  const { uid, language, codePath, expected } = param;
-  const { testCases, executeName, timeLimit } = param;
-
-  const result = {};
-  const executions = await testCases.map((tc) =>
-    executeCode({
-      uid,
-      language,
-      codePath,
-      input: tc.input || "",
-      executeName: `${executeName}_${tc.name.trim()}`,
-      timeLimit,
-    }).then((actual) => ({
-      tc,
-      actual,
-    }))
-  );
-
-  const outputs = await Promise.all(executions);
-
-  for (const { tc, actual } of outputs) {
-    const expectedOutput = expected[tc.name]?.trim() ?? "";
-    const actualOutput = actual.output?.trim() ?? "";
-
-    const similarity = await hybridSimilarity(expectedOutput, actualOutput);
-    const threshold = 30;
-    const pass = similarity >= threshold;
-
-    result[`TC>${tc.name}`] = pass;
-    result[`TC_WEIGHT>${tc.name}`] = tc.weight || 1;
-  }
-
-  return result;
-}
+};

@@ -1,16 +1,4 @@
-export function plagiarismChecker(key, answer) {
-  let score = 0;
-  let total = 0;
-
-  for (const k of Object.keys(key)) {
-    score += Math.min(key[k], answer[k] || 0);
-    total += key[k];
-  }
-
-  return Math.round((score / total) * 100);
-}
-
-export async function SBCAM(key, answer) {
+export const SBCAM = async (key, answer) => {
   let Tf = 0;
   let Sf = 0;
 
@@ -24,9 +12,9 @@ export async function SBCAM(key, answer) {
   const Fs = Math.max(0, Math.min(1, 1 - Math.abs(Tf - Sf) / Tf));
 
   return Math.round(Fs * 100);
-}
+};
 
-export async function SEDM(answer) {
+export const SEDM = async (answer) => {
   const TOTAL_LINES = answer.TOTAL_LINES || 0;
 
   if (TOTAL_LINES <= 0) return 0;
@@ -44,9 +32,9 @@ export async function SEDM(answer) {
   const score = Math.max((1 - errorPercentage) * 100, 0);
 
   return Math.round(score);
-}
+};
 
-export async function STCAM(answer) {
+export const STCAM = async (answer) => {
   let weightedPassSum = 0;
   let totalWeight = 0;
 
@@ -66,4 +54,16 @@ export async function STCAM(answer) {
   if (totalWeight === 0) return 0;
 
   return Math.round((weightedPassSum / totalWeight) * 100);
+};
+
+export function plagiarismChecker(key, answer) {
+  let score = 0;
+  let total = 0;
+
+  for (const k of Object.keys(key)) {
+    score += Math.min(key[k], answer[k] || 0);
+    total += key[k];
+  }
+
+  return Math.round((score / total) * 100);
 }

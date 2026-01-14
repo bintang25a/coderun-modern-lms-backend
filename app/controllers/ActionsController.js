@@ -7,11 +7,14 @@ import Java from "tree-sitter-java";
 import Python from "tree-sitter-python";
 import * as pty from "node-pty";
 import { Assignment, Submission } from "../../database/models/Model.js";
-import { buildDataset } from "../utils/javascript/dataset.js";
-import { buildAnswer } from "../utils/javascript/answer.js";
-import { finalizeHeader } from "../utils/javascript/schema.js";
-import { writeCSV } from "../utils/javascript/csv.js";
-import { runPythonModel } from "../utils/javascript/modelling.js";
+import {
+  buildDataset,
+  buildAnswer,
+  buildCSV,
+  buildHeader,
+  buildAnswerKey,
+  buildModel,
+} from "../utils/javascript/builder.js";
 
 const BASE_DIR = process.cwd();
 
@@ -73,9 +76,15 @@ export const grade = async (req, res) => {
 };
 
 export const autoGrade = async (req, res) => {
-  const { assignment_number, language } = req.body;
-  const { test_cases, concurrency = 1, timeLimit } = req.body;
   const { uid } = req;
+  const {
+    assignment_number,
+    language,
+    test_cases,
+    timeLimit,
+    concurrency = 1,
+    regrade = false,
+  } = req.body;
 
   if (!assignment_number || !language || !timeLimit) {
     return res.status(400).json({
@@ -132,28 +141,39 @@ export const autoGrade = async (req, res) => {
 
   const schemaSet = new Set();
 
-  const datasetRows = await buildDataset({
+  const answerKey = await buildAnswerKey({
+    parser,
+    language,
+    testCases,
+    uid,
+    timeLimit,
     assignment,
+  });
+
+  const datasetRows = await buildDataset({
     parser,
     schemaSet,
     language,
     testCases,
     uid,
     timeLimit,
-    CONCURRENCY: concurrency,
+    answerKey,
+    CONCURRENCY: concurrency || 1,
   });
 
   const answerRows = await buildAnswer({
-    assignment,
     parser,
     schemaSet,
     language,
     testCases,
     uid,
     timeLimit,
+    answerKey,
+    assignment,
+    REGRADE: regrade,
   });
 
-  const header = finalizeHeader(schemaSet);
+  const header = await buildHeader(schemaSet);
 
   const outputDir = path.join(BASE_DIR, "temp", req.uid);
   fs.mkdirSync(outputDir, { recursive: true });
@@ -165,13 +185,13 @@ export const autoGrade = async (req, res) => {
     ...header.slice(3).map((k) => r.counter[k] || 0),
   ];
 
-  await writeCSV(
+  await buildCSV(
     path.join(outputDir, `DATASET_${assignment_number}.csv`),
     header,
     datasetRows.map(toCSVRow)
   );
 
-  await writeCSV(
+  await buildCSV(
     path.join(outputDir, `ANSWER_${assignment_number}.csv`),
     header,
     answerRows.map(toCSVRow)
@@ -201,7 +221,7 @@ export const autoGrade = async (req, res) => {
   }
 
   try {
-    await runPythonModel({
+    await buildModel({
       modelPyPath,
       datasetPath,
       answerPath,

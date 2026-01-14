@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
 import pLimit from "p-limit";
-import { parseCode } from "./parser.js";
-import { SBCAM, SEDM, STCAM } from "./nodeCalculator.js";
-import { deduplicateDataset, extendSchema } from "./schema.js";
-import { runTestCasesForFile } from "./testcaseRunner.js";
-import { executeCode } from "./execute.js";
-import { scaling, scoring } from "./determineLabel.js";
+import { parseCode } from "../parser.js";
+import { SBCAM, SEDM, STCAM } from "../nodeCalculator.js";
+import { deduplicateDataset, extendSchema } from "../schema.js";
+import { runTestCasesForFile } from "../testcaseRunner.js";
+import { executeCode } from "../execute.js";
+import { scaling, scoring } from "../determineLabel.js";
 
 const BASE_DIR = process.cwd();
 

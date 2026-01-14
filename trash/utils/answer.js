@@ -1,16 +1,16 @@
 import path from "path";
-import { parseCode } from "./parser.js";
-import { extendSchema } from "./schema.js";
-import { SBCAM, STCAM, SEDM } from "./nodeCalculator.js";
-import { scaling } from "./determineLabel.js";
-import { executeCode } from "./execute.js";
-import { runTestCasesForFile } from "./testcaseRunner.js";
+import { parseCode } from "../parser.js";
+import { extendSchema } from "../schema.js";
+import { SBCAM, STCAM, SEDM } from "../nodeCalculator.js";
+import { scaling } from "../determineLabel.js";
+import { executeCode } from "../execute.js";
+import { runTestCasesForFile } from "../testcaseRunner.js";
 
 const BASE_DIR = process.cwd();
 
 export async function buildAnswer(param) {
-  const { assignment, parser, testCases, schemaSet, uid, language, timeLimit } =
-    param;
+  const { assignment, parser, testCases, schemaSet } = param;
+  const { uid, language, timeLimit, REGRADE } = param;
 
   const keyPath = path
     .join(BASE_DIR, assignment.answer_key)
@@ -42,7 +42,7 @@ export async function buildAnswer(param) {
   const rows = [];
   let rowId = 0;
   for (const sub of files) {
-    if (sub.grade != null) continue;
+    if (sub.grade != null && !REGRADE) continue;
 
     const filePath = path.join(BASE_DIR, sub.answer).replace(/\\/g, "/");
 

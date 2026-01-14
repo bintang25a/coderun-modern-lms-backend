@@ -1,4 +1,6 @@
-export async function scaling({ stcamScore, sbcamScore }) {
+export const scaling = async (param) => {
+  const { stcamScore, sbcamScore } = param;
+
   const THRESHOLD_STCAM = 30;
   const THRESHOLD_SBCAM = 70;
 
@@ -15,10 +17,12 @@ export async function scaling({ stcamScore, sbcamScore }) {
   }
 
   return scale;
-}
+};
 
-export async function scoring({ stcamScore, sbcamScore, sedmScore }) {
+export const scoring = async (param) => {
+  const { stcamScore, sbcamScore, sedmScore } = param;
+
   const score = Math.round((sbcamScore * 2 + stcamScore + sedmScore) / 4);
 
   return score;
-}
+};
