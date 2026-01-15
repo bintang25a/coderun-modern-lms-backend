@@ -56,7 +56,7 @@ export const STCAM = async (answer) => {
   return Math.round((weightedPassSum / totalWeight) * 100);
 };
 
-export function plagiarismChecker(key, answer) {
+export async function SBCAM1(key, answer) {
   let score = 0;
   let total = 0;
 

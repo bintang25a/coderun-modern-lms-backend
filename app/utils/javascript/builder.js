@@ -126,12 +126,12 @@ export const buildDataset = async (param) => {
 
     const scoreTemp = await scoring({ sbcamScore, stcamScore, sedmScore });
     const scale = await scaling({ sbcamScore, stcamScore });
-    const score =
-      scale === "low"
-        ? Math.min(scoreTemp, 30)
-        : scale === "medium"
-        ? Math.max(scoreTemp, 30)
-        : Math.max(scoreTemp, 70);
+    const score = sbcamScore;
+    // scale === "low"
+    //   ? Math.min(scoreTemp, 30)
+    //   : scale === "medium"
+    //   ? Math.max(scoreTemp, 30)
+    //   : Math.max(scoreTemp, 70);
 
     rows.push({
       row_id: r.row_id,
@@ -167,6 +167,13 @@ export const buildAnswer = async (param) => {
   console.log(`User: ${uid} - Answer labelling start:`);
 
   const rows = [];
+  // rows.push({
+  //   row_id: "key",
+  //   score: 0,
+  //   scale: "high",
+  //   counter: keyCounter,
+  // });
+
   let rowId = 0;
   for (const sub of submissions) {
     if (sub.grade != null && !REGRADE) continue;
