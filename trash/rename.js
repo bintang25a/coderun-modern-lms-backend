@@ -3,7 +3,7 @@ import path from "path";
 
 // --- KONFIGURASI ---
 const TARGET_FOLDER = "./trash/rename"; // Folder tempat file Java berada
-const NEW_BASE_NAME = "exam"; // Nama dasar (a1, a2, ...)
+const NEW_BASE_NAME = "poscode"; // Nama dasar (a1, a2, ...)
 // -------------------
 
 function processJavaFiles() {
@@ -22,7 +22,7 @@ function processJavaFiles() {
       const oldPath = path.join(TARGET_FOLDER, filename);
       const oldClassName = path.parse(filename).name;
       const newClassName = `${NEW_BASE_NAME}${index + 1}`;
-      const newPath = path.join(TARGET_FOLDER, `${newClassName}.java`);
+      const newPath = path.join(TARGET_FOLDER, `${newClassName}.c`);
 
       // 1. Baca isi file
       let content = fs.readFileSync(oldPath, "utf8");

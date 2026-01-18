@@ -1,16 +1,18 @@
 export const scaling = async (param) => {
-  const { stcamScore, sbcamScore } = param;
+  const { stcamScore, sbcamScore, sedmScore } = param;
 
-  const THRESHOLD_STCAM = 30;
-  const THRESHOLD_SBCAM = 70;
+  const THRESHOLD = 70;
 
-  const isStcamHigh = stcamScore >= THRESHOLD_STCAM;
-  const isSbcamHigh = sbcamScore >= THRESHOLD_SBCAM;
+  const isStcamHigh = stcamScore >= THRESHOLD;
+  const isSbcamHigh = sbcamScore >= THRESHOLD;
+  const isError = sedmScore != 100;
 
   let scale = "";
-  if (isSbcamHigh && isStcamHigh) {
+  if (isError) {
+    scale = "low";
+  } else if (isSbcamHigh && isStcamHigh) {
     scale = "high";
-  } else if (isStcamHigh) {
+  } else if (isSbcamHigh || isStcamHigh) {
     scale = "medium";
   } else {
     scale = "low";

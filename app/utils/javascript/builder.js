@@ -35,8 +35,6 @@ export const buildAnswerKey = async (param) => {
       timeLimit,
     });
 
-    // console.log(result.output?.trim());
-
     expected[tc.name] = result.output?.trim();
   }
 
@@ -125,13 +123,13 @@ export const buildDataset = async (param) => {
     const stcamScore = await STCAM(r.testCaseResult);
 
     const scoreTemp = await scoring({ sbcamScore, stcamScore, sedmScore });
-    const scale = await scaling({ sbcamScore, stcamScore });
-    const score = sbcamScore;
-    // scale === "low"
-    //   ? Math.min(scoreTemp, 30)
-    //   : scale === "medium"
-    //   ? Math.max(scoreTemp, 30)
-    //   : Math.max(scoreTemp, 70);
+    const scale = await scaling({ sbcamScore, stcamScore, sedmScore });
+    const score =
+      scale === "low"
+        ? Math.min(scoreTemp, 30)
+        : scale === "medium"
+        ? scoreTemp
+        : Math.max(scoreTemp, 70);
 
     rows.push({
       row_id: r.row_id,
@@ -199,8 +197,7 @@ export const buildAnswer = async (param) => {
     const sedmScore = await SEDM(counter);
     const stcamScore = await STCAM(testCaseResult);
 
-    const scaleTemp = await scaling({ sbcamScore, stcamScore });
-    const scale = sedmScore == 100 ? scaleTemp : "low";
+    const scale = await scaling({ sbcamScore, stcamScore, sedmScore });
 
     const interval = Math.max(1, Math.floor(submissions.length / 10));
     if (rowId % interval === 0 || rowId === 1 || rowId === submissions.length) {
@@ -248,7 +245,7 @@ export const buildModel = async (param) =>
     } = param;
 
     const py = spawn("python3", [modelPyPath], {
-      stdio: ["pipe", "ignore", "pipe"], // stdout di-ignore
+      stdio: ["pipe", "ignore", "pipe"],
     });
 
     let stderr = "";
