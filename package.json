@@ -1,6 +1,9 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "nodemonConfig": {
+    "ignore": ["*.json"]
+  },
   "type": "module",
   "main": "index.js",
   "scripts": {
