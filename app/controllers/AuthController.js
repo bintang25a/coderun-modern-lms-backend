@@ -87,6 +87,10 @@ export const login = async (req, res) => {
   });
 };
 
+export const isLogin = async (req, res) => {
+  return;
+};
+
 export const logout = async (req, res) => {
   const authHeader = req.headers["authorization"];
   const activeToken = authHeader && authHeader.split(" ")[1];

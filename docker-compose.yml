@@ -34,7 +34,8 @@ services:
       - ./public:/backend/public
       - /backend/node_modules
       - ./temp:/temp
-    command: nodemon -L index.js
+    # command: nodemon -L index.js
+    command: node index.js
 
 volumes:
   coderun-modern-lms-mysql:

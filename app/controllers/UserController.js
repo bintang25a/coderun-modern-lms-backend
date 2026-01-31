@@ -94,8 +94,7 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { uid, name, phone_number, email, role, password, class_code } =
-    req.body;
+  const { uid, name, phone_number, email, role, password } = req.body;
 
   if (!uid || !name || !phone_number || !email || !role || !password) {
     return res.status(400).json({
@@ -136,7 +135,6 @@ export const store = async (req, res) => {
       email,
       role,
       password: hashPassword,
-      class_code,
       photo,
     });
 

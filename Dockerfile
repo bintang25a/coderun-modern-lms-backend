@@ -4,6 +4,7 @@ FROM coderun-modern-lms-backend
 # docker compose down -v
 # docker compose build --no-cache backend
 # docker compose up -d
+# docker compose up -d --no-deps backend
 # docker build -t coderun-modern-lms-sandbox -f docker/Dockerfile.sandbox .
 
 # ===== JIKA KONFLIK =====
