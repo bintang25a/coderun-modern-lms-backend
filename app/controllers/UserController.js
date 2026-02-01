@@ -7,7 +7,7 @@ export const index = async (req, res) => {
   try {
     const users = await User.findAll({
       attributes: {
-        exclude: ["password"],
+        exclude: req.role == "Admin" ? [] : ["password"],
       },
       include: [
         {
@@ -50,7 +50,7 @@ export const show = async (req, res) => {
         uid: req.params.uid,
       },
       attributes: {
-        exclude: ["password"],
+        exclude: req.role == "Admin" ? [] : ["password"],
       },
       include: [
         {
@@ -152,7 +152,7 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { name, phone_number, email, role, password, class_code } = req.body;
+  const { name, phone_number, email, role, password } = req.body;
 
   const user = await User.findOne({
     where: {
@@ -209,7 +209,6 @@ export const update = async (req, res) => {
         email,
         role,
         password: hashPassword,
-        class_code,
         photo,
       },
       {

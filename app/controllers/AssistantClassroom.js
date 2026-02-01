@@ -111,21 +111,6 @@ export const update = async (req, res) => {
     });
   }
 
-  const noUser = await AssistantClassroom.findOne({
-    where: {
-      class_code,
-      uid,
-    },
-  });
-
-  if (noUser) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Update assistant in classroom failed, User already in classroom",
-    });
-  }
-
   const assistant = await User.findOne({
     where: {
       uid,
