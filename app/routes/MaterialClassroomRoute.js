@@ -12,7 +12,7 @@ const router = express.Router({ mergeParams: true });
 router.use(verifyUser);
 router.get("/", index);
 router.post("/", assistantOnly, store);
-router.patch("/:class_code/:uid", assistantOnly, update);
-router.delete("/:class_code/:uid", assistantOnly, destroy);
+router.patch("/:class_code/:material_number", assistantOnly, update);
+router.delete("/:class_code/:material_number", assistantOnly, destroy);
 
 export default router;
