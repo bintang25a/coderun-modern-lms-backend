@@ -3,16 +3,24 @@ import fs from "fs";
 import path from "path";
 
 export const index = async (req, res) => {
+  const whereClause = {};
+  if (req.params.class_code) {
+    whereClause.class_code = req.params.class_code;
+  }
+
   try {
     const assignments = await Assignment.findAll({
-      where: {
-        class_code: req.params.class_code,
-      },
+      whereClause,
       include: [
+        {
+          association: Assignment.associations.assistant,
+          as: "assistant",
+          attributes: ["name", "uid"],
+        },
         {
           association: Assignment.associations.classroom,
           as: "classroom",
-          attributes: ["name"],
+          attributes: ["class_code", "name"],
         },
         {
           association: Assignment.associations.submissions,
@@ -37,17 +45,28 @@ export const index = async (req, res) => {
 };
 
 export const show = async (req, res) => {
+  const whereClause = {};
+  if (req.params.class_code) {
+    whereClause.class_code = req.params.class_code;
+  }
+
+  if (req.params.class_code) {
+    whereClause.assignment_number = req.params.assignment_number;
+  }
+
   try {
     const assignment = await Assignment.findOne({
-      where: {
-        assignment_number: req.params.assignment_number,
-        class_code: req.params.class_code,
-      },
+      whereClause,
       include: [
+        {
+          association: Assignment.associations.assistant,
+          as: "assistant",
+          attributes: ["name", "uid"],
+        },
         {
           association: Assignment.associations.classroom,
           as: "classroom",
-          attributes: ["name"],
+          attributes: ["class_code", "name"],
         },
         {
           association: Assignment.associations.submissions,

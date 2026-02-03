@@ -80,6 +80,11 @@ Material.belongsToMany(Classroom, {
   as: "classrooms",
 });
 
+Assignment.belongsTo(User, {
+  foreignKey: "assistant_uid",
+  sourceKey: "uid",
+  as: "assistant",
+});
 Assignment.belongsTo(Classroom, {
   foreignKey: "class_code",
   sourceKey: "class_code",
