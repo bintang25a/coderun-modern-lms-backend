@@ -2,17 +2,15 @@ import express from "express";
 import {
   index,
   store,
-  update,
   destroy,
 } from "../controllers/StudentClassroomController.js";
-import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
+import { verifyUser } from "../middlewares/AuthUser.js";
 
 const router = express.Router({ mergeParams: true });
 
 router.use(verifyUser);
 router.get("/", index);
-router.post("/", assistantOnly, store);
-router.patch("/:class_code/:uid", assistantOnly, update);
-router.delete("/:class_code/:uid", assistantOnly, destroy);
+router.post("/", store);
+router.delete("/:class_code/:uid", destroy);
 
 export default router;
