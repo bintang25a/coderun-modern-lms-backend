@@ -4,8 +4,10 @@ import path from "path";
 
 export const index = async (req, res) => {
   const whereClause = {};
-  if (req.params.class_code) {
-    whereClause.class_code = req.params.class_code;
+  const { class_code } = req.params;
+
+  if (class_code || class_code !== "admin") {
+    whereClause.class_code = class_code;
   }
 
   try {
@@ -46,12 +48,14 @@ export const index = async (req, res) => {
 
 export const show = async (req, res) => {
   const whereClause = {};
-  if (req.params.class_code) {
-    whereClause.class_code = req.params.class_code;
+  const { class_code, assignment_number } = req.params;
+
+  if (class_code || class_code !== "admin") {
+    whereClause.class_code = class_code;
   }
 
-  if (req.params.class_code) {
-    whereClause.assignment_number = req.params.assignment_number;
+  if (assignment_number) {
+    whereClause.assignment_number = assignment_number;
   }
 
   try {

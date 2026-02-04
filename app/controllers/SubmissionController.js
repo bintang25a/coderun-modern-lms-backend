@@ -3,16 +3,31 @@ import fs from "fs";
 import path from "path";
 
 export const index = async (req, res) => {
+  const whereClause = {};
+  const { assignment_number } = req.params;
+
+  if (assignment_number || assignment_number !== "admin") {
+    whereClause.assignment_number = assignment_number;
+  }
+
   try {
     const submissions = await Submission.findAll({
-      where: {
-        assignment_number: req.params.assignment_number,
-      },
+      whereClause,
       include: [
+        {
+          association: Submission.associations.assignment,
+          as: "assignment",
+          attributes: ["title"],
+        },
         {
           association: Submission.associations.student,
           as: "student",
-          attributes: ["uid", "name", "email"],
+          attributes: ["name", "email"],
+        },
+        {
+          association: Submission.associations.assistant,
+          as: "assistant",
+          attributes: ["name", "email"],
         },
       ],
     });
@@ -32,17 +47,35 @@ export const index = async (req, res) => {
 };
 
 export const show = async (req, res) => {
+  const whereClause = {};
+  const { assignment_number, submission_number } = req.params;
+
+  if (assignment_number || assignment_number !== "admin") {
+    whereClause.assignment_number = assignment_number;
+  }
+
+  if (submission_number) {
+    whereClause.submission_number = submission_number;
+  }
+
   try {
     const submission = await Submission.findOne({
-      where: {
-        submission_number: req.params.submission_number,
-        assignment_number: req.params.assignment_number,
-      },
+      whereClause,
       include: [
+        {
+          association: Submission.associations.assignment,
+          as: "assignment",
+          attributes: ["title"],
+        },
         {
           association: Submission.associations.student,
           as: "student",
-          attributes: ["uid", "name", "email"],
+          attributes: ["name", "email"],
+        },
+        {
+          association: Submission.associations.assistant,
+          as: "assistant",
+          attributes: ["name", "email"],
         },
       ],
     });

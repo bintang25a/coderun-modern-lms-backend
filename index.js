@@ -22,6 +22,22 @@ const port = process.env.APP_PORT;
 
 app.use(cors);
 app.use(express.json());
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+
+    const method = `[${req.method}]`;
+    const status = String(res.statusCode).padStart(3);
+    const time = `${duration}ms`.padStart(6);
+    const url = req.originalUrl;
+
+    console.log(`${method.padEnd(8)} | ${status} ${time} | ${url}`);
+  });
+
+  next();
+});
 app.use(express.urlencoded({ extended: true }));
 
 app.use(AuthRoute);

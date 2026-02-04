@@ -10,13 +10,13 @@ const db_user = process.env.DB_USERNAME;
 const db_password = process.env.DB_PASSWORD;
 
 const db = new Sequelize(db_database, db_user, db_password, {
-   host: db_host,
-   dialect: db_dialect,
+  host: db_host,
+  dialect: db_dialect,
+  logging: false,
 });
 
 db.authenticate()
   .then(() => console.log("Database connected!"))
   .catch((err) => console.error("Database connection error:", err));
-
 
 export default db;

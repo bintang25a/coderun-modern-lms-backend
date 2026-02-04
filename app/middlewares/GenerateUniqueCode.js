@@ -9,20 +9,11 @@ export const generateAssignmentNumber = async (req, res, next) => {
       return next();
     }
 
-    const lastAssignment = await Assignment.findOne({
+    const assignmentCount = await Assignment.count({
       where: { class_code },
-      order: [["createdAt", "DESC"]],
     });
 
-    let nextNumber = 1;
-
-    if (lastAssignment) {
-      const lastNumberPart = parseInt(
-        lastAssignment.assignment_number.split("-").pop(),
-        10
-      );
-      nextNumber = lastNumberPart + 1;
-    }
+    const nextNumber = assignmentCount + 1;
 
     const newAssignmentNumber = `${class_code}-${String(nextNumber).padStart(
       2,
@@ -33,7 +24,7 @@ export const generateAssignmentNumber = async (req, res, next) => {
     next();
   } catch (error) {
     console.error("Error generating assignment number:", error);
-    res.status(500).json({ message: "Failed to generate assignment number" });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 

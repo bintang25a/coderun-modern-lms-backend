@@ -101,6 +101,16 @@ Submission.belongsTo(User, {
   sourceKey: "uid",
   as: "student",
 });
+Submission.belongsTo(User, {
+  foreignKey: "assistant_uid",
+  sourceKey: "uid",
+  as: "assistant",
+});
+Submission.belongsTo(Assignment, {
+  foreignKey: "assignment_number",
+  sourceKey: "assignment_number",
+  as: "assignment",
+});
 
 const Setting = db.define("settings", {
   key: {
