@@ -10,6 +10,7 @@ export const index = async (req, res) => {
           through: {
             attributes: [],
           },
+          exclude: ["password"],
         },
         {
           association: Classroom.associations.students,
@@ -17,6 +18,7 @@ export const index = async (req, res) => {
           through: {
             attributes: [],
           },
+          exclude: ["password"],
         },
         {
           association: Classroom.associations.materials,
@@ -31,6 +33,10 @@ export const index = async (req, res) => {
           include: [
             {
               association: "submissions",
+            },
+            {
+              association: "assistant",
+              exclude: ["password"],
             },
           ],
         },
@@ -64,6 +70,7 @@ export const show = async (req, res) => {
           through: {
             attributes: [],
           },
+          exclude: ["password"],
         },
         {
           association: Classroom.associations.students,
@@ -71,6 +78,7 @@ export const show = async (req, res) => {
           through: {
             attributes: [],
           },
+          exclude: ["password"],
         },
         {
           association: Classroom.associations.materials,
@@ -85,6 +93,10 @@ export const show = async (req, res) => {
           include: [
             {
               association: "submissions",
+            },
+            {
+              association: "assistant",
+              exclude: ["password"],
             },
           ],
         },

@@ -61,10 +61,12 @@ export const show = async (req, res) => {
             {
               association: "assistants",
               through: { attributes: [] },
+              exclude: ["password"],
             },
             {
               association: "students",
               through: { attributes: [] },
+              exclude: ["password"],
             },
             {
               association: "materials",
@@ -75,6 +77,10 @@ export const show = async (req, res) => {
               include: [
                 {
                   association: "submissions",
+                },
+                {
+                  association: "assistant",
+                  exclude: ["password"],
                 },
               ],
             },
@@ -90,10 +96,12 @@ export const show = async (req, res) => {
             {
               association: "assistants",
               through: { attributes: [] },
+              exclude: ["password"],
             },
             {
               association: "students",
               through: { attributes: [] },
+              exclude: ["password"],
             },
             {
               association: "materials",
@@ -104,6 +112,10 @@ export const show = async (req, res) => {
               include: [
                 {
                   association: "submissions",
+                },
+                {
+                  association: "assistant",
+                  exclude: ["password"],
                 },
               ],
             },
