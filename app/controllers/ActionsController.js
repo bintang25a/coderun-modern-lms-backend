@@ -264,21 +264,21 @@ export const autoGrade = async (req, res) => {
 };
 
 export const run = async (req, res) => {
-  const { language, codePath, input = "", timeLimit = 5000 } = req.body;
+  const { language, codePath, code, input = "", timeLimit = 5000 } = req.body;
   const uid = req.uid;
 
-  if (!language || !codePath || !uid) {
+  if (!language || (!codePath && !code) || !uid) {
     return res.status(400).json({
       success: false,
       message: "Running code failed, field cannot be empty",
     });
   }
 
-  const normalizedPath = codePath.replace(/\\/g, "/");
-  const absoluteCodePath = path.resolve(BASE_DIR, normalizedPath);
+  const normalizedPath = !code ? codePath?.replace(/\\/g, "/") : "";
+  const absoluteCodePath = !code ? path.resolve(BASE_DIR, normalizedPath) : "";
   const tempDir = path.resolve(BASE_DIR, "temp", uid);
 
-  if (!fs.existsSync(absoluteCodePath)) {
+  if (!fs.existsSync(absoluteCodePath) && !code) {
     return res.status(404).json({
       success: false,
       message: "Running code failed, Source code not found",
@@ -286,8 +286,8 @@ export const run = async (req, res) => {
     });
   }
 
-  const codeContent = fs.readFileSync(absoluteCodePath, "utf8");
-  if (!codeContent.trim()) {
+  const codeContent = !code ? fs.readFileSync(absoluteCodePath, "utf8") : "";
+  if (!codeContent.trim() && !code) {
     return res.status(400).json({
       success: false,
       message: "Running code failed, Source code is empty",
@@ -311,7 +311,7 @@ export const run = async (req, res) => {
       break;
 
     case "java": {
-      const match = codeContent.match(/public\s+class\s+(\w+)/);
+      const match = codeContent?.match(/public\s+class\s+(\w+)/);
       const className = match ? match[1] : "Main";
       filename = `${className}.java`;
       command = `javac ${filename} && java -Dsun.stdout.buffered=false ${className}`;
@@ -331,7 +331,7 @@ export const run = async (req, res) => {
   }
 
   const sourcePath = path.join(tempDir, filename);
-  fs.writeFileSync(sourcePath, codeContent);
+  fs.writeFileSync(sourcePath, code ? code : codeContent);
 
   const ptyProcess = pty.spawn("bash", ["-c", command], {
     cwd: tempDir,
@@ -375,7 +375,7 @@ export const run = async (req, res) => {
       finished = true;
       ptyProcess.kill();
 
-      return res.status(408).json({
+      return res.status(200).json({
         success: false,
         message: "Running code successfully, Execution timed out",
         output: clean(output),
