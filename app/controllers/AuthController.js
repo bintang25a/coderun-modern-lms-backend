@@ -88,7 +88,9 @@ export const login = async (req, res) => {
 };
 
 export const isLogin = async (req, res) => {
-  return;
+  return res.status(200).json({
+    success: true,
+  });
 };
 
 export const logout = async (req, res) => {

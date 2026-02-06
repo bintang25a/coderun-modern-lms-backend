@@ -4,30 +4,35 @@ import path from "path";
 
 export const index = async (req, res) => {
   const whereClause = {};
-  const { class_code } = req.params;
+  const { class_code } = req?.params;
 
-  if (class_code || class_code !== "admin") {
+  if (class_code && class_code !== "admin") {
     whereClause.class_code = class_code;
   }
 
   try {
     const assignments = await Assignment.findAll({
-      whereClause,
+      where: whereClause,
       include: [
         {
           association: Assignment.associations.assistant,
           as: "assistant",
-          attributes: ["name", "uid"],
+          attributes: ["name"],
         },
         {
           association: Assignment.associations.classroom,
           as: "classroom",
-          attributes: ["class_code", "name"],
+          attributes: ["name"],
+        },
+        {
+          association: Assignment.associations.testcases,
+          as: "testcases",
+          exclude: ["createdAt", "updatedAt"],
         },
         {
           association: Assignment.associations.submissions,
           as: "submissions",
-          attributes: ["submission_number", "student_uid", "grade"],
+          exclude: ["createdAt", "updatedAt"],
         },
       ],
     });
@@ -48,9 +53,9 @@ export const index = async (req, res) => {
 
 export const show = async (req, res) => {
   const whereClause = {};
-  const { class_code, assignment_number } = req.params;
+  const { class_code, assignment_number } = req?.params;
 
-  if (class_code || class_code !== "admin") {
+  if (class_code && class_code !== "admin") {
     whereClause.class_code = class_code;
   }
 
@@ -60,22 +65,24 @@ export const show = async (req, res) => {
 
   try {
     const assignment = await Assignment.findOne({
-      whereClause,
+      where: whereClause,
       include: [
         {
           association: Assignment.associations.assistant,
           as: "assistant",
-          attributes: ["name", "uid"],
+          exclude: ["password"],
         },
         {
           association: Assignment.associations.classroom,
           as: "classroom",
-          attributes: ["class_code", "name"],
+        },
+        {
+          association: Assignment.associations.testcases,
+          as: "testcases",
         },
         {
           association: Assignment.associations.submissions,
           as: "submissions",
-          attributes: ["submission_number", "student_uid", "grade"],
         },
       ],
     });
@@ -102,7 +109,7 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { title, description, startAt, endAt, overtime } = req.body;
+  const { title, description, startAt, endAt, overtime } = req?.body;
 
   if (!title || !description || !startAt || !endAt || !overtime) {
     return res.status(400).json({
@@ -170,12 +177,13 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { title, description, startAt, endAt, overtime } = req.body;
+  const { assignment_number, class_code } = req?.params;
+  const { title, description, startAt, endAt, overtime } = req?.body;
 
   const assignment = await Assignment.findOne({
     where: {
-      assignment_number: req.params.assignment_number,
-      class_code: req.params.class_code,
+      assignment_number,
+      class_code,
     },
   });
 
@@ -186,7 +194,15 @@ export const update = async (req, res) => {
     });
   }
 
-  if (!title || !description || !startAt || !endAt || !overtime) {
+  if (
+    !title ||
+    !description ||
+    !startAt ||
+    !endAt ||
+    !overtime ||
+    !assignment_number ||
+    !class_code
+  ) {
     return res.status(400).json({
       success: false,
       message: "Update assignment failed, Field cannot empty",
@@ -226,7 +242,7 @@ export const update = async (req, res) => {
       },
       {
         where: {
-          assignment_number: req.params.assignment_number,
+          assignment_number,
         },
       }
     );
@@ -245,10 +261,19 @@ export const update = async (req, res) => {
 };
 
 export const destroy = async (req, res) => {
+  const { assignment_number, class_code } = req?.params;
+
+  if (!assignment_number || !class_code) {
+    return res.status(400).json({
+      success: false,
+      message: "Update assignment failed, Params cannot empty",
+    });
+  }
+
   const assignment = await Assignment.findOne({
     where: {
-      assignment_number: req.params.assignment_number,
-      class_code: req.params.class_code,
+      assignment_number,
+      class_code,
     },
   });
 
@@ -270,7 +295,7 @@ export const destroy = async (req, res) => {
 
     await Assignment.destroy({
       where: {
-        assignment_number: req.params.assignment_number,
+        assignment_number,
       },
     });
 

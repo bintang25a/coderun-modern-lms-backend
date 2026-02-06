@@ -7,7 +7,7 @@ import {
   destroy,
 } from "../controllers/SubmissionController.js";
 import { generateSubmissionNumber as GSN } from "../middlewares/GenerateUniqueCode.js";
-import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
+import { verifyUser } from "../middlewares/AuthUser.js";
 import uploadAnswer from "../middlewares/UploadAssignmentFile.js";
 
 const router = express.Router({ mergeParams: true });

@@ -76,11 +76,14 @@ export const show = async (req, res) => {
               association: "assignments",
               include: [
                 {
-                  association: "submissions",
-                },
-                {
                   association: "assistant",
                   exclude: ["password"],
+                },
+                {
+                  association: "testcases",
+                },
+                {
+                  association: "submissions",
                 },
               ],
             },
@@ -111,11 +114,14 @@ export const show = async (req, res) => {
               association: "assignments",
               include: [
                 {
-                  association: "submissions",
-                },
-                {
                   association: "assistant",
                   exclude: ["password"],
+                },
+                {
+                  association: "testcases",
+                },
+                {
+                  association: "submissions",
                 },
               ],
             },

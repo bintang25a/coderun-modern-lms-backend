@@ -32,10 +32,19 @@ export const index = async (req, res) => {
 };
 
 export const show = async (req, res) => {
+  const { material_number } = req?.params;
+
+  if (!material_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Show material failed, Params cannot empty",
+    });
+  }
+
   try {
     const material = await Material.findOne({
       where: {
-        material_number: req.params.material_number,
+        material_number,
       },
       include: [
         {
@@ -71,7 +80,7 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { title } = req.body;
+  const { title } = req?.body;
 
   if (!title || !req.file) {
     return res.status(400).json({
@@ -112,11 +121,12 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { title } = req.body;
+  const { material_number } = req?.params;
+  const { title } = req?.body;
 
   const material = await Material.findOne({
     where: {
-      material_number: req.params.material_number,
+      material_number,
     },
   });
 
@@ -127,7 +137,7 @@ export const update = async (req, res) => {
     });
   }
 
-  if (!title) {
+  if (!title || !material_number) {
     return res.status(400).json({
       success: false,
       message: "Create material failed, Field cannot empty",
@@ -144,12 +154,12 @@ export const update = async (req, res) => {
   try {
     await Material.update(
       {
-        assistant_uid: req.uid,
+        assistant_uid: req?.uid,
         title,
       },
       {
         where: {
-          material_number: req.params.material_number,
+          material_number,
         },
       }
     );
@@ -168,9 +178,18 @@ export const update = async (req, res) => {
 };
 
 export const destroy = async (req, res) => {
+  const { material_number } = req?.params;
+
+  if (!material_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Delete material failed, Params cannot empty",
+    });
+  }
+
   const material = await Material.findOne({
     where: {
-      material_number: req.params.material_number,
+      material_number,
     },
   });
 
@@ -189,7 +208,7 @@ export const destroy = async (req, res) => {
 
     await Material.destroy({
       where: {
-        material_number: req.params.material_number,
+        material_number,
       },
     });
 

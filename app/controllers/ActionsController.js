@@ -274,8 +274,8 @@ export const run = async (req, res) => {
     });
   }
 
-  const normalizedPath = !code ? codePath?.replace(/\\/g, "/") : "";
-  const absoluteCodePath = !code ? path.resolve(BASE_DIR, normalizedPath) : "";
+  const normPath = codePath ? codePath?.replace(/\\/g, "/") : "";
+  const absoluteCodePath = codePath ? path.resolve(BASE_DIR, normPath) : "";
   const tempDir = path.resolve(BASE_DIR, "temp", uid);
 
   if (!fs.existsSync(absoluteCodePath) && !code) {
@@ -286,8 +286,8 @@ export const run = async (req, res) => {
     });
   }
 
-  const codeContent = !code ? fs.readFileSync(absoluteCodePath, "utf8") : "";
-  if (!codeContent.trim() && !code) {
+  const codeContent = codePath ? fs.readFileSync(absoluteCodePath, "utf8") : "";
+  if (!codeContent.trim() && codePath) {
     return res.status(400).json({
       success: false,
       message: "Running code failed, Source code is empty",
@@ -331,7 +331,7 @@ export const run = async (req, res) => {
   }
 
   const sourcePath = path.join(tempDir, filename);
-  fs.writeFileSync(sourcePath, code ? code : codeContent);
+  fs.writeFileSync(sourcePath, !codePath ? code : codeContent);
 
   const ptyProcess = pty.spawn("bash", ["-c", command], {
     cwd: tempDir,

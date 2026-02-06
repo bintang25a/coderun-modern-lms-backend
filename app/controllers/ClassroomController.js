@@ -10,7 +10,7 @@ export const index = async (req, res) => {
           through: {
             attributes: [],
           },
-          exclude: ["password"],
+          include: ["uid", "name"],
         },
         {
           association: Classroom.associations.students,
@@ -18,7 +18,7 @@ export const index = async (req, res) => {
           through: {
             attributes: [],
           },
-          exclude: ["password"],
+          include: ["uid", "name"],
         },
         {
           association: Classroom.associations.materials,
@@ -32,11 +32,14 @@ export const index = async (req, res) => {
           as: "assignments",
           include: [
             {
-              association: "submissions",
+              association: "assistant",
+              include: ["uid", "name"],
             },
             {
-              association: "assistant",
-              exclude: ["password"],
+              association: "testcases",
+            },
+            {
+              association: "submissions",
             },
           ],
         },
@@ -58,10 +61,11 @@ export const index = async (req, res) => {
 };
 
 export const show = async (req, res) => {
+  const { class_code } = req?.params;
   try {
     const classroom = await Classroom.findOne({
       where: {
-        class_code: req.params.class_code,
+        class_code,
       },
       include: [
         {
@@ -92,11 +96,14 @@ export const show = async (req, res) => {
           as: "assignments",
           include: [
             {
-              association: "submissions",
-            },
-            {
               association: "assistant",
               exclude: ["password"],
+            },
+            {
+              association: "testcases",
+            },
+            {
+              association: "submissions",
             },
           ],
         },
@@ -125,7 +132,7 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { class_code, name } = req.body;
+  const { class_code, name } = req?.body;
 
   if (!class_code || !name) {
     return res.status(400).json({
@@ -167,11 +174,12 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { name } = req.body;
+  const { class_code } = req?.params;
+  const { name } = req?.body;
 
   const classroom = await Classroom.findOne({
     where: {
-      class_code: req.params.class_code,
+      class_code,
     },
   });
 
@@ -196,7 +204,7 @@ export const update = async (req, res) => {
       },
       {
         where: {
-          class_code: req.params.class_code,
+          class_code,
         },
       }
     );
@@ -215,9 +223,18 @@ export const update = async (req, res) => {
 };
 
 export const destroy = async (req, res) => {
+  const { class_code } = req?.params;
+
+  if (!class_code) {
+    return res.status(400).json({
+      success: false,
+      message: "Delete classroom failed, Params cannot empty",
+    });
+  }
+
   const classroom = await Classroom.findOne({
     where: {
-      class_code: req.params.class_code,
+      class_code,
     },
   });
 
@@ -231,7 +248,7 @@ export const destroy = async (req, res) => {
   try {
     await Classroom.destroy({
       where: {
-        class_code: req.params.class_code,
+        class_code,
       },
     });
 

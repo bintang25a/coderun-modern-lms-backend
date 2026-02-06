@@ -13,6 +13,7 @@ import StudentClassroomRoute from "./app/routes/StudentClassroomRoute.js";
 import MaterialClassroomRoute from "./app/routes/MaterialClassroomRoute.js";
 import AssignmentRoute from "./app/routes/AssignmentRoute.js";
 import SubmissionRoute from "./app/routes/SubmissionRoute.js";
+import TestcaseRoute from "./app/routes/TestcaseRoute.js";
 import ActionsRoute from "./app/routes/ActionsRoute.js";
 
 dotenv.config();
@@ -48,6 +49,7 @@ app.use("/assistants", AssistantClassroomRoute);
 app.use("/students", StudentClassroomRoute);
 app.use("/classmaterial", MaterialClassroomRoute);
 app.use("/assignments/:class_code", AssignmentRoute);
+app.use("/testcases/:assignment_number", TestcaseRoute);
 app.use("/submissions/:assignment_number", SubmissionRoute);
 app.use(ActionsRoute);
 

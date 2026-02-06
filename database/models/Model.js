@@ -6,6 +6,7 @@ import StudentClassroom from "./StudentClassroom.js";
 import MaterialClassroom from "./MaterialClassroom.js";
 import Material from "./Material.js";
 import Assignment from "./Assignment.js";
+import Testcase from "./Testcase.js";
 import Submission from "./Submission.js";
 import { DataTypes } from "sequelize";
 
@@ -90,10 +91,21 @@ Assignment.belongsTo(Classroom, {
   sourceKey: "class_code",
   as: "classroom",
 });
+Assignment.hasMany(Testcase, {
+  foreignKey: "assignment_number",
+  sourceKey: "assignment_number",
+  as: "testcases",
+});
 Assignment.hasMany(Submission, {
   foreignKey: "assignment_number",
   sourceKey: "assignment_number",
   as: "submissions",
+});
+
+Testcase.belongsTo(Assignment, {
+  foreignKey: "assignment_number",
+  sourceKey: "assignment_number",
+  as: "assignment",
 });
 
 Submission.belongsTo(User, {
@@ -143,6 +155,7 @@ export {
   MaterialClassroom,
   Material,
   Assignment,
+  Testcase,
   Submission,
   Token,
   Setting,

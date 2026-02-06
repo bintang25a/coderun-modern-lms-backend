@@ -34,6 +34,10 @@ const Assignment = db.define("assignments", {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  support_link: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   answer_key: {
     type: DataTypes.TEXT,
     allowNull: true,

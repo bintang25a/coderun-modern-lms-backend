@@ -4,15 +4,15 @@ import path from "path";
 
 export const index = async (req, res) => {
   const whereClause = {};
-  const { assignment_number } = req.params;
+  const { assignment_number } = req?.params;
 
-  if (assignment_number || assignment_number !== "admin") {
+  if (assignment_number && assignment_number !== "admin") {
     whereClause.assignment_number = assignment_number;
   }
 
   try {
     const submissions = await Submission.findAll({
-      whereClause,
+      where: whereClause,
       include: [
         {
           association: Submission.associations.assignment,
@@ -22,12 +22,12 @@ export const index = async (req, res) => {
         {
           association: Submission.associations.student,
           as: "student",
-          attributes: ["name", "email"],
+          attributes: ["name"],
         },
         {
           association: Submission.associations.assistant,
           as: "assistant",
-          attributes: ["name", "email"],
+          attributes: ["name"],
         },
       ],
     });
@@ -48,9 +48,9 @@ export const index = async (req, res) => {
 
 export const show = async (req, res) => {
   const whereClause = {};
-  const { assignment_number, submission_number } = req.params;
+  const { assignment_number, submission_number } = req?.params;
 
-  if (assignment_number || assignment_number !== "admin") {
+  if (assignment_number && assignment_number !== "admin") {
     whereClause.assignment_number = assignment_number;
   }
 
@@ -60,7 +60,7 @@ export const show = async (req, res) => {
 
   try {
     const submission = await Submission.findOne({
-      whereClause,
+      where: whereClause,
       include: [
         {
           association: Submission.associations.assignment,
@@ -70,12 +70,12 @@ export const show = async (req, res) => {
         {
           association: Submission.associations.student,
           as: "student",
-          attributes: ["name", "email"],
+          attributes: ["name"],
         },
         {
           association: Submission.associations.assistant,
           as: "assistant",
-          attributes: ["name", "email"],
+          attributes: ["name"],
         },
       ],
     });
@@ -116,7 +116,8 @@ export const store = async (req, res) => {
     });
   }
 
-  const { assignment_number } = req.params;
+  const { assignment_number } = req?.params;
+
   const answerPath = path.join(
     "public/assignments",
     assignment_number,
@@ -128,6 +129,7 @@ export const store = async (req, res) => {
   const submission = await Submission.findOne({
     where: {
       answer,
+      assignment_number,
     },
   });
 
@@ -160,10 +162,19 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
+  const { submission_number, assignment_number } = req?.params;
+
+  if (!submission_number || !assignment_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Update submission failed, Params cannot empty",
+    });
+  }
+
   const submission = await Submission.findOne({
     where: {
-      submission_number: req.params.submission_number,
-      assignment_number: req.params.assignment_number,
+      submission_number,
+      assignment_number,
     },
   });
 
@@ -192,7 +203,7 @@ export const update = async (req, res) => {
       },
       {
         where: {
-          submission_number: req.params.submission_number,
+          submission_number,
         },
       }
     );
@@ -211,10 +222,19 @@ export const update = async (req, res) => {
 };
 
 export const destroy = async (req, res) => {
+  const { submission_number, assignment_number } = req?.params;
+
+  if (!submission_number || !assignment_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Delete submission failed, Params cannot empty",
+    });
+  }
+
   const submission = await Submission.findOne({
     where: {
-      submission_number: req.params.submission_number,
-      assignment_number: req.params.assignment_number,
+      submission_number,
+      assignment_number,
     },
   });
 
