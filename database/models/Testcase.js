@@ -3,7 +3,7 @@ import { db } from "./Model.js";
 
 const Testcase = db.define("testcases", {
   testcase_number: {
-    type: DataTypes.NUMBER,
+    type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
@@ -19,8 +19,8 @@ const Testcase = db.define("testcases", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  wight: {
-    type: DataTypes.NUMBER,
+  weight: {
+    type: DataTypes.INTEGER,
     allowNull: false,
   },
 });
