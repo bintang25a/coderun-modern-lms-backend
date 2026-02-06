@@ -9,10 +9,10 @@ export default async function UserSeeder() {
   const users = [
     // 1 Admin
     {
-      uid: "U001",
+      uid: "251003",
       name: "Bintang Al Fizar",
-      email: "bintang@example.com",
-      phone_number: "081234567890",
+      email: "bintangalfizar25@gmail.com",
+      phone_number: "082111710709",
       role: "admin",
     },
 
