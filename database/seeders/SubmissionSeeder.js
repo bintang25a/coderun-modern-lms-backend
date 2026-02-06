@@ -78,7 +78,7 @@ export default async function SubmissionSeeder() {
     {
       submission_number: "U001-20251104062613177",
       assignment_number: "IF23A1-01",
-      student_uid: "U001",
+      student_uid: "U005",
       answer: "public\\assignments\\IF23A1-01\\U001.java",
       grade: null,
     },
