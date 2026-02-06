@@ -42,91 +42,55 @@ export const index = async (req, res) => {
 };
 
 export const show = async (req, res) => {
+  const { uid } = req?.params;
+
+  if (!uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Display user failed, Params cannot empty",
+    });
+  }
+
   try {
     const user = await User.findOne({
       where: {
-        uid: req.params.uid,
+        uid,
       },
       attributes: {
         exclude: req.role == "Admin" ? [] : ["password"],
       },
       include: [
-        {
-          association: User.associations.classrooms,
-          as: "classrooms",
-          through: {
-            attributes: [],
-          },
-          include: [
-            {
-              association: "assistants",
-              through: { attributes: [] },
-              exclude: ["password"],
-            },
-            {
-              association: "students",
-              through: { attributes: [] },
-              exclude: ["password"],
-            },
-            {
-              association: "materials",
-              through: { attributes: [] },
-            },
-            {
-              association: "assignments",
+        req.role === "Praktikan"
+          ? {
+              association: User.associations.classrooms,
+              as: "classrooms",
+              attributes: ["class_code", "name"],
+              through: {
+                attributes: [],
+              },
               include: [
                 {
-                  association: "assistant",
-                  exclude: ["password"],
+                  association: "assistants",
+                  attributes: ["uid", "name"],
+                  through: { attributes: [] },
                 },
+              ],
+            }
+          : {
+              association: User.associations.assists,
+              as: "assists",
+              attributes: ["class_code", "name"],
+              through: {
+                attributes: [],
+              },
+              include: [
                 {
-                  association: "testcases",
-                },
-                {
-                  association: "submissions",
+                  association: "assistants",
+                  attributes: ["uid", "name"],
+                  through: { attributes: [] },
                 },
               ],
             },
-          ],
-        },
-        {
-          association: User.associations.assists,
-          as: "assists",
-          through: {
-            attributes: [],
-          },
-          include: [
-            {
-              association: "assistants",
-              through: { attributes: [] },
-              exclude: ["password"],
-            },
-            {
-              association: "students",
-              through: { attributes: [] },
-              exclude: ["password"],
-            },
-            {
-              association: "materials",
-              through: { attributes: [] },
-            },
-            {
-              association: "assignments",
-              include: [
-                {
-                  association: "assistant",
-                  exclude: ["password"],
-                },
-                {
-                  association: "testcases",
-                },
-                {
-                  association: "submissions",
-                },
-              ],
-            },
-          ],
-        },
       ],
     });
 
@@ -152,7 +116,7 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { uid, name, phone_number, email, role, password } = req.body;
+  const { uid, name, phone_number, email, role, password } = req?.body;
 
   if (!uid || !name || !phone_number || !email || !role || !password) {
     return res.status(400).json({
@@ -210,11 +174,20 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
+  const { uid } = req?.params;
+
+  if (!uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Update user failed, Params cannot empty",
+    });
+  }
+
   const { name, phone_number, email, role, password } = req.body;
 
   const user = await User.findOne({
     where: {
-      uid: req.params.uid,
+      uid,
     },
   });
 
@@ -271,7 +244,7 @@ export const update = async (req, res) => {
       },
       {
         where: {
-          uid: req.params.uid,
+          uid,
         },
       }
     );
@@ -290,9 +263,18 @@ export const update = async (req, res) => {
 };
 
 export const destroy = async (req, res) => {
+  const { uid } = req?.params;
+
+  if (!uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Delete user failed, Params cannot empty",
+    });
+  }
+
   const user = await User.findOne({
     where: {
-      uid: req.params.uid,
+      uid,
     },
   });
 
@@ -314,7 +296,7 @@ export const destroy = async (req, res) => {
 
     await User.destroy({
       where: {
-        uid: req.params.uid,
+        uid,
       },
     });
 

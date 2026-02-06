@@ -87,8 +87,9 @@ export const show = async (req, res) => {
       });
     }
 
-    const code = fs.existsSync(submission.answer)
-      ? fs.readFileSync(submission.answer, "utf-8")
+    const answer = submission?.answer?.replace(/\\/g, "/");
+    const code = fs.existsSync(answer)
+      ? fs.readFileSync(answer, "utf-8")
       : null;
 
     res.status(200).json({

@@ -23,7 +23,7 @@ export const index = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { class_code, material_number } = req.body;
+  const { class_code, material_number } = req?.body;
 
   if (!class_code || !material_number) {
     return res.status(400).json({
@@ -87,12 +87,21 @@ export const store = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const { class_code, material_number } = req.body;
+  const { class_code: classCode, material_number: materialNumber } =
+    req?.params;
+  const { class_code, material_number } = req?.body;
+
+  if (!classCode || !materialNumber) {
+    return res.status(400).json({
+      success: false,
+      message: "Update material in classrooms failed, Params cannot be empty",
+    });
+  }
 
   const materialClassroom = await MaterialClassroom.findOne({
     where: {
-      class_code: req.params.class_code,
-      material_number: req.params.material_number,
+      class_code: classCode,
+      material_number: materialNumber,
     },
   });
 
@@ -173,10 +182,19 @@ export const update = async (req, res) => {
 };
 
 export const destroy = async (req, res) => {
+  const { class_code, material_number } = req?.params;
+
+  if (!class_code || !material_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Delete material in classroom failed, Params cannot empty",
+    });
+  }
+
   const classroom = await MaterialClassroom.findOne({
     where: {
-      class_code: req.params.class_code,
-      material_number: req.params.material_number,
+      class_code,
+      material_number,
     },
   });
 
@@ -191,8 +209,8 @@ export const destroy = async (req, res) => {
   try {
     await MaterialClassroom.destroy({
       where: {
-        class_code: req.params.class_code,
-        material_number: req.params.material_number,
+        class_code,
+        material_number,
       },
     });
 

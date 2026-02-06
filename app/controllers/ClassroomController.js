@@ -7,22 +7,23 @@ export const index = async (req, res) => {
         {
           association: Classroom.associations.assistants,
           as: "assistants",
+          attributes: ["uid", "name"],
           through: {
             attributes: [],
           },
-          include: ["uid", "name"],
         },
         {
           association: Classroom.associations.students,
           as: "students",
+          attributes: ["uid", "name"],
           through: {
             attributes: [],
           },
-          include: ["uid", "name"],
         },
         {
           association: Classroom.associations.materials,
           as: "materials",
+          attributes: ["material_number", "title"],
           through: {
             attributes: [],
           },
@@ -30,18 +31,8 @@ export const index = async (req, res) => {
         {
           association: Classroom.associations.assignments,
           as: "assignments",
-          include: [
-            {
-              association: "assistant",
-              include: ["uid", "name"],
-            },
-            {
-              association: "testcases",
-            },
-            {
-              association: "submissions",
-            },
-          ],
+          attributes: ["assignment_number", "title"],
+          separate: true,
         },
       ],
     });
@@ -71,22 +62,23 @@ export const show = async (req, res) => {
         {
           association: Classroom.associations.assistants,
           as: "assistants",
+          attributes: ["uid", "name"],
           through: {
             attributes: [],
           },
-          exclude: ["password"],
         },
         {
           association: Classroom.associations.students,
           as: "students",
+          attributes: ["uid", "name"],
           through: {
             attributes: [],
           },
-          exclude: ["password"],
         },
         {
           association: Classroom.associations.materials,
           as: "materials",
+          attributes: ["material_number", "title", "material"],
           through: {
             attributes: [],
           },
@@ -94,16 +86,24 @@ export const show = async (req, res) => {
         {
           association: Classroom.associations.assignments,
           as: "assignments",
+          attributes: ["assignment_number", "title", "startAt", "endAt"],
+          separate: true,
           include: [
             {
               association: "assistant",
-              exclude: ["password"],
+              attributes: ["uid", "name"],
             },
             {
               association: "testcases",
             },
             {
               association: "submissions",
+              attributes: [
+                "submission_number",
+                "student_uid",
+                "answer",
+                "grade",
+              ],
             },
           ],
         },

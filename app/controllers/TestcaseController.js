@@ -83,9 +83,9 @@ export const show = async (req, res) => {
 
 export const store = async (req, res) => {
   const { assignment_number } = req.params;
-  const { name, weight } = req.body;
+  const { name, weight, input } = req.body;
 
-  if (!assignment_number || !name || !weight) {
+  if (!assignment_number || !name || !weight || !input) {
     return res.status(400).json({
       success: false,
       message: "Create testcase failde, Field cannot empty",
@@ -97,6 +97,7 @@ export const store = async (req, res) => {
       assignment_number,
       name,
       weight: Number(weight),
+      input,
     });
 
     res.status(201).json({
@@ -114,9 +115,9 @@ export const store = async (req, res) => {
 
 export const update = async (req, res) => {
   const { assignment_number, testcase_number } = req?.params;
-  const { name, weight } = req?.body;
+  const { name, weight, input } = req?.body;
 
-  if (!assignment_number || !testcase_number || !name || !weight) {
+  if (!assignment_number || !testcase_number || !name || !weight || !input) {
     return res.status(400).json({
       success: false,
       message: "Update testcase failed, Field cannot empty",
@@ -142,6 +143,7 @@ export const update = async (req, res) => {
       {
         name,
         weight,
+        input,
       },
       {
         where: {

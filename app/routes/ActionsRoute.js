@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.use(verifyUser);
 router.post("/run", run);
-router.post("/grade", assistantOnly, autoGrade);
-router.patch("/:submission_number/grade", assistantOnly, grade);
+router.post("/grade", assistantOnly, grade);
+router.post("/auto-grade", assistantOnly, autoGrade);
 
 export default router;

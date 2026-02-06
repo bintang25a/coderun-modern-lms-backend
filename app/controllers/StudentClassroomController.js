@@ -23,7 +23,7 @@ export const index = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { class_code, uid } = req.body;
+  const { class_code, uid } = req?.body;
 
   if (!class_code || !uid) {
     return res.status(400).json({
@@ -86,10 +86,19 @@ export const store = async (req, res) => {
 };
 
 export const destroy = async (req, res) => {
+  const { class_code, uid } = req?.params;
+
+  if (!class_code || !uid) {
+    return res.status(400).json({
+      success: false,
+      message: "Delete student in classroom failed, Params cannot empty",
+    });
+  }
+
   const classroom = await StudentClassroom.findOne({
     where: {
-      class_code: req.params.class_code,
-      uid: req.params.uid,
+      class_code,
+      uid,
     },
   });
 
@@ -104,8 +113,8 @@ export const destroy = async (req, res) => {
   try {
     await StudentClassroom.destroy({
       where: {
-        class_code: req.params.class_code,
-        uid: req.params.uid,
+        class_code,
+        uid,
       },
     });
 

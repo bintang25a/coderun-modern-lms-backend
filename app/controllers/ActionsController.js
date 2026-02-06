@@ -19,10 +19,19 @@ import {
 const BASE_DIR = process.cwd();
 
 export const grade = async (req, res) => {
+  const { submission_number, assignment_number } = req?.body;
+
+  if (!submission_number || !assignment_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Grading submission failed, Request body empty",
+    });
+  }
+
   const submission = await Submission.findOne({
     where: {
-      submission_number: req.params.submission_number,
-      assignment_number: req.params.assignment_number,
+      submission_number,
+      assignment_number,
     },
   });
 
@@ -57,7 +66,7 @@ export const grade = async (req, res) => {
       },
       {
         where: {
-          submission_number: req.params.submission_number,
+          submission_number,
         },
       }
     );

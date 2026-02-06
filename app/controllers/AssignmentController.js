@@ -27,12 +27,12 @@ export const index = async (req, res) => {
         {
           association: Assignment.associations.testcases,
           as: "testcases",
-          exclude: ["createdAt", "updatedAt"],
+          exclude: ["testcase_number", "name"],
         },
         {
           association: Assignment.associations.submissions,
           as: "submissions",
-          exclude: ["createdAt", "updatedAt"],
+          exclude: ["submission_number", "assistant_uid"],
         },
       ],
     });
@@ -70,19 +70,27 @@ export const show = async (req, res) => {
         {
           association: Assignment.associations.assistant,
           as: "assistant",
-          exclude: ["password"],
+          attributes: ["name"],
         },
         {
           association: Assignment.associations.classroom,
           as: "classroom",
+          attributes: ["name"],
         },
         {
           association: Assignment.associations.testcases,
           as: "testcases",
+          exclude: ["createdAt", "updatedAt"],
         },
         {
           association: Assignment.associations.submissions,
           as: "submissions",
+          include: [
+            {
+              association: "student",
+              attributes: ["name"],
+            },
+          ],
         },
       ],
     });
@@ -109,9 +117,17 @@ export const show = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { title, description, startAt, endAt, overtime } = req?.body;
+  const { title, description, startAt, endAt, overtime, support_link } =
+    req?.body;
 
-  if (!title || !description || !startAt || !endAt || !overtime) {
+  if (
+    !title ||
+    !description ||
+    !startAt ||
+    !endAt ||
+    !overtime ||
+    support_link
+  ) {
     return res.status(400).json({
       success: false,
       message: "Create assignment failed, Field cannot empty",
@@ -161,6 +177,7 @@ export const store = async (req, res) => {
       startAt,
       endAt,
       overtime,
+      support_link,
     });
 
     res.status(201).json({
@@ -178,7 +195,8 @@ export const store = async (req, res) => {
 
 export const update = async (req, res) => {
   const { assignment_number, class_code } = req?.params;
-  const { title, description, startAt, endAt, overtime } = req?.body;
+  const { title, description, startAt, endAt, overtime, support_link } =
+    req?.body;
 
   const assignment = await Assignment.findOne({
     where: {
@@ -201,7 +219,8 @@ export const update = async (req, res) => {
     !endAt ||
     !overtime ||
     !assignment_number ||
-    !class_code
+    !class_code ||
+    !support_link
   ) {
     return res.status(400).json({
       success: false,
@@ -239,6 +258,7 @@ export const update = async (req, res) => {
         endAt,
         overtime,
         answer_key,
+        support_link,
       },
       {
         where: {
