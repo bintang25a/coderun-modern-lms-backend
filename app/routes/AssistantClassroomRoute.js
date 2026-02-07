@@ -1,18 +1,12 @@
 import express from "express";
-import {
-  index,
-  store,
-  update,
-  destroy,
-} from "../controllers/AssistantClassroom.js";
+import { index, store, destroy } from "../controllers/AssistantClassroom.js";
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 
 const router = express.Router({ mergeParams: true });
 
 router.use(verifyUser);
 router.get("/", index);
-router.post("/", assistantOnly, store);
-router.patch("/:class_code/:uid", assistantOnly, update);
+router.post("/:class_code/:uid", assistantOnly, store);
 router.delete("/:class_code/:uid", assistantOnly, destroy);
 
 export default router;

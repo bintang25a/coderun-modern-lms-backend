@@ -23,12 +23,12 @@ export const index = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { class_code, material_number } = req?.body;
+  const { class_code, material_number } = req?.params;
 
   if (!class_code || !material_number) {
     return res.status(400).json({
       success: false,
-      message: "Create material in classroom failed, Field cannot empty",
+      message: "Create material in classroom failed, Params cannot empty",
     });
   }
 
@@ -82,101 +82,6 @@ export const store = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Create material in classroom failed",
-    });
-  }
-};
-
-export const update = async (req, res) => {
-  const { class_code: classCode, material_number: materialNumber } =
-    req?.params;
-  const { class_code, material_number } = req?.body;
-
-  if (!classCode || !materialNumber) {
-    return res.status(400).json({
-      success: false,
-      message: "Update material in classrooms failed, Params cannot be empty",
-    });
-  }
-
-  const materialClassroom = await MaterialClassroom.findOne({
-    where: {
-      class_code: classCode,
-      material_number: materialNumber,
-    },
-  });
-
-  if (!materialClassroom) {
-    return res.status(404).json({
-      success: false,
-      message:
-        "Update material in classroom failed, Material or Classroom not found",
-    });
-  }
-
-  if (!class_code || !material_number) {
-    return res.status(400).json({
-      success: false,
-      message: "Update material in classroom failed, Field cannot empty",
-    });
-  }
-
-  const noMaterial = await MaterialClassroom.findOne({
-    where: {
-      class_code,
-      material_number,
-    },
-  });
-
-  if (noMaterial) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Update material in classroom failed, Material already in classroom",
-    });
-  }
-
-  const material = await Material.findOne({
-    where: {
-      material_number,
-    },
-  });
-
-  const classroom = await Classroom.findOne({
-    where: {
-      class_code,
-    },
-  });
-
-  if (!material || !classroom) {
-    return res.status(404).json({
-      success: false,
-      message:
-        "Update material in classroom failed, Material Number or Class code not found",
-    });
-  }
-
-  try {
-    await materialClassroom.destroy({
-      where: {
-        class_code: req.params.class_code,
-        material_number: req.params.material_number,
-      },
-    });
-
-    await MaterialClassroom.create({
-      class_code,
-      material_number,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Update material in classroom successfully",
-    });
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({
-      success: false,
-      message: "Update material in classroom failed",
     });
   }
 };

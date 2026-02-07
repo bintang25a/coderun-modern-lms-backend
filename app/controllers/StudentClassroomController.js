@@ -23,12 +23,12 @@ export const index = async (req, res) => {
 };
 
 export const store = async (req, res) => {
-  const { class_code, uid } = req?.body;
+  const { class_code, uid } = req?.params;
 
   if (!class_code || !uid) {
     return res.status(400).json({
       success: false,
-      message: "Create student in classroom failed, Field cannot empty",
+      message: "Create student in classroom failed, Params cannot empty",
     });
   }
 

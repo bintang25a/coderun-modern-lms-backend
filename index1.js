@@ -15,10 +15,6 @@ import { fileURLToPath } from "url";
 import path from "path";
 import dotenv from "dotenv";
 import cors from "./config/cors.js";
-
-import { createServer } from "http";
-import { Server } from "socket.io";
-
 import AuthRoute from "./app/routes/AuthRoute.js";
 import UserRoute from "./app/routes/UserRoute.js";
 import ClassroomRoute from "./app/routes/ClassroomRoute.js";
@@ -35,24 +31,6 @@ dotenv.config();
 
 const app = express();
 const port = process.env.APP_PORT;
-
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
-
-app.set("socketio", io);
-io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}!`);
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected!");
-  });
-});
 
 app.use(cors);
 app.use(express.json());
@@ -98,6 +76,4 @@ if (!fs.existsSync(profilesPath)) {
   fs.mkdirSync(profilesPath, { recursive: true });
 }
 
-httpServer.listen(port, () =>
-  console.log(`Server run on http://localhost:${port}`)
-);
+app.listen(port, () => console.log(`Server run on http://localhost:${port}`));

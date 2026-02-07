@@ -10,7 +10,7 @@ import { scaling, scoring } from "./support-label.js";
 const BASE_DIR = process.cwd();
 
 export const buildAnswerKey = async (param) => {
-  const { parser, language, testCases, uid, timeLimit, assignment } = param;
+  const { io, parser, language, testCases, uid, timeLimit, assignment } = param;
 
   const keyPath = path
     .join(BASE_DIR, assignment.answer_key)
@@ -24,7 +24,9 @@ export const buildAnswerKey = async (param) => {
 
   const expected = {};
   for (const tc of testCases) {
-    console.log(`User: ${uid} - ${tc.name} execute`);
+    io.emit(`autoGrade-${uid}`, {
+      message: `${tc.name} execute`,
+    });
 
     const result = await executeCode({
       uid,
@@ -46,6 +48,7 @@ export const buildAnswerKey = async (param) => {
 
 export const buildDataset = async (param) => {
   const {
+    io,
     parser,
     schemaSet,
     language,
@@ -72,7 +75,9 @@ export const buildDataset = async (param) => {
     counter: keyCounter,
   });
 
-  console.log(`User: ${uid} - Dataset labelling start:`);
+  io.emit(`autoGrade-${uid}`, {
+    message: `Dataset labelling start:`,
+  });
 
   const limit = pLimit(CONCURRENCY);
   const files = fs.readdirSync(datasetDir);
@@ -84,9 +89,9 @@ export const buildDataset = async (param) => {
 
       const interval = Math.max(1, Math.floor(files.length / 10));
       if (rowId % interval === 0 || rowId === 1 || rowId === files.length) {
-        console.log(
-          `User: ${uid} - Dataset labelling process... ${rowId}/${files.length}`
-        );
+        io.emit(`autoGrade-${uid}`, {
+          message: `Dataset labelling process... ${rowId}/${files.length}`,
+        });
       }
 
       const counter = await parseCode(parser, filePath);
@@ -140,13 +145,16 @@ export const buildDataset = async (param) => {
     });
   }
 
-  console.log(`User: ${uid} - Dataset labelling finish!`);
+  io.emit(`autoGrade-${uid}`, {
+    message: `Dataset labelling finish!`,
+  });
 
   return await deduplicateDataset(rows);
 };
 
 export const buildAnswer = async (param) => {
   const {
+    io,
     parser,
     schemaSet,
     language,
@@ -162,15 +170,11 @@ export const buildAnswer = async (param) => {
 
   const submissions = assignment.submissions;
 
-  console.log(`User: ${uid} - Answer labelling start:`);
+  io.emit(`autoGrade-${uid}`, {
+    message: `Answer labelling start:`,
+  });
 
   const rows = [];
-  // rows.push({
-  //   row_id: "key",
-  //   score: 0,
-  //   scale: "high",
-  //   counter: keyCounter,
-  // });
 
   let rowId = 0;
   for (const sub of submissions) {
@@ -201,9 +205,9 @@ export const buildAnswer = async (param) => {
 
     const interval = Math.max(1, Math.floor(submissions.length / 10));
     if (rowId % interval === 0 || rowId === 1 || rowId === submissions.length) {
-      console.log(
-        `User: ${uid} - Answer labelling process... ${rowId}/${submissions.length}`
-      );
+      io.emit(`autoGrade-${uid}`, {
+        message: `Answer labelling process... ${rowId}/${submissions.length}`,
+      });
     }
 
     rows.push({
@@ -214,7 +218,9 @@ export const buildAnswer = async (param) => {
     });
   }
 
-  console.log(`User: ${uid} - Answer labelling finish!`);
+  io.emit(`autoGrade-${uid}`, {
+    message: `Answer labelling finish!`,
+  });
 
   return rows;
 };

@@ -15,6 +15,10 @@ const Testcase = db.define("testcases", {
       key: "assignment_number",
     },
   },
+  input: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,

@@ -10,7 +10,7 @@ const router = express.Router({ mergeParams: true });
 
 router.use(verifyUser);
 router.get("/", index);
-router.post("/", store);
+router.post("/:class_code/:uid", store);
 router.delete("/:class_code/:uid", destroy);
 
 export default router;

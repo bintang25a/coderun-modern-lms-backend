@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import archiver from "archiver";
 import Parser from "tree-sitter";
 import C from "tree-sitter-c";
 import CPP from "tree-sitter-cpp";
@@ -94,6 +95,7 @@ export const autoGrade = async (req, res) => {
     concurrency = 1,
     regrade = false,
   } = req.body;
+  const io = req.app.get("socketio");
 
   if (!assignment_number || !language || !timeLimit) {
     return res.status(400).json({
@@ -130,7 +132,9 @@ export const autoGrade = async (req, res) => {
     });
   }
 
-  console.log(`User: ${uid} - Starting auto grade`);
+  io.emit(`autoGrade-${uid}`, {
+    message: `Starting auto grade`,
+  });
 
   const parser = new Parser();
   if (language === "c") {
@@ -151,6 +155,7 @@ export const autoGrade = async (req, res) => {
   const schemaSet = new Set();
 
   const answerKey = await buildAnswerKey({
+    io,
     parser,
     language,
     testCases,
@@ -160,6 +165,7 @@ export const autoGrade = async (req, res) => {
   });
 
   const datasetRows = await buildDataset({
+    io,
     parser,
     schemaSet,
     language,
@@ -171,6 +177,7 @@ export const autoGrade = async (req, res) => {
   });
 
   const answerRows = await buildAnswer({
+    io,
     parser,
     schemaSet,
     language,
@@ -181,6 +188,15 @@ export const autoGrade = async (req, res) => {
     assignment,
     REGRADE: regrade,
   });
+
+  if (answerRows?.length === 0) {
+    io.emit(`autoGrade-${uid}-done`);
+
+    return res.status(200).json({
+      success: true,
+      message: `Automatic grading finish`,
+    });
+  }
 
   const header = await buildHeader(schemaSet);
 
@@ -264,7 +280,10 @@ export const autoGrade = async (req, res) => {
     });
   }
 
-  console.log(`User: ${uid} - Auto grade finish`);
+  io.emit(`autoGrade-${uid}`, {
+    message: `Auto grade finish`,
+  });
+  io.emit(`autoGrade-${uid}-done`);
 
   return res.status(200).json({
     success: true,
@@ -320,7 +339,9 @@ export const run = async (req, res) => {
       break;
 
     case "java": {
-      const match = codeContent?.match(/public\s+class\s+(\w+)/);
+      const match = !codePath
+        ? code?.match(/public\s+class\s+(\w+)/)
+        : codeContent?.match(/public\s+class\s+(\w+)/);
       const className = match ? match[1] : "Main";
       filename = `${className}.java`;
       command = `javac ${filename} && java -Dsun.stdout.buffered=false ${className}`;
@@ -404,4 +425,72 @@ export const run = async (req, res) => {
       output: clean(output),
     });
   });
+};
+
+export const downloadSubmissions = async (req, res) => {
+  const { assignment_number } = req?.params;
+
+  if (!assignment_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Download submissions failed, Params cannot empty",
+    });
+  }
+
+  try {
+    const assignment = await Assignment.findOne({
+      where: {
+        assignment_number,
+      },
+      include: [
+        {
+          association: Assignment.associations.submissions,
+          as: "submissions",
+        },
+      ],
+    });
+
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: "Download submissions failed, Assignment not found",
+      });
+    }
+
+    const submissions = assignment?.submissions;
+
+    if (!submissions) {
+      return res.status(404).json({
+        success: false,
+        message: "Download submissions failed, No submissions",
+      });
+    }
+
+    res.attachment(`submissions-${assignment_number}.zip`);
+
+    const archive = archiver("zip", { zlib: { level: 9 } });
+
+    archive.on("error", (err) => {
+      throw err;
+    });
+
+    archive.pipe(res);
+
+    submissions.forEach((sub) => {
+      const filePath = sub?.answer?.replace(/\\/g, "/");
+
+      if (fs.existsSync(filePath)) {
+        const fileName = path.basename(filePath);
+        archive.file(filePath, { name: fileName });
+      }
+    });
+
+    await archive.finalize();
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Download submissions failed",
+    });
+  }
 };
