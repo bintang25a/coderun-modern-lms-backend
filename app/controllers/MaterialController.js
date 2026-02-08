@@ -1,6 +1,10 @@
 import { Material } from "../../database/models/Model.js";
-import fs from "fs";
+import { fileURLToPath } from "url";
 import path from "path";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const index = async (req, res) => {
   try {
@@ -79,6 +83,54 @@ export const show = async (req, res) => {
   }
 };
 
+export const file = async (req, res) => {
+  const { material_number } = req.params;
+
+  if (!material_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Show material failed, Params cannot empty",
+    });
+  }
+
+  try {
+    const material = await Material.findOne({
+      where: { material_number },
+    });
+
+    if (!material) {
+      return res.status(404).json({
+        success: false,
+        message: "Show material failed, Material not found",
+      });
+    }
+
+    const filePath = path.join(__dirname, "../../", material.material);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Show material failed, File not found",
+      });
+    }
+
+    // HEADER untuk blob inline
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline");
+    res.setHeader("Content-Length", fs.statSync(filePath).size);
+
+    // STREAM PDF
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to stream material",
+    });
+  }
+};
+
 export const store = async (req, res) => {
   const { title } = req?.body;
 
@@ -110,6 +162,7 @@ export const store = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Create material successfully",
+      data: material_number,
     });
   } catch (error) {
     console.log(error.message);

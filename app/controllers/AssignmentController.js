@@ -126,7 +126,7 @@ export const store = async (req, res) => {
     !startAt ||
     !endAt ||
     !overtime ||
-    support_link
+    !support_link
   ) {
     return res.status(400).json({
       success: false,
@@ -183,6 +183,7 @@ export const store = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Create assignment successfully",
+      data: assignment_number,
     });
   } catch (error) {
     console.log(error.message);

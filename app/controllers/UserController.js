@@ -163,6 +163,7 @@ export const store = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Create user successfully",
+      data: uid,
     });
   } catch (error) {
     console.log(error.message);

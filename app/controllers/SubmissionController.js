@@ -152,6 +152,7 @@ export const store = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Create submission successfully",
+      data: req.submission_number,
     });
   } catch (error) {
     console.log(error.message);

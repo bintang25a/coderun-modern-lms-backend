@@ -163,6 +163,7 @@ export const store = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Create classroom successfully",
+      data: class_code,
     });
   } catch (error) {
     console.log(error.message);

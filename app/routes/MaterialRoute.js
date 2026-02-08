@@ -5,6 +5,7 @@ import {
   store,
   update,
   destroy,
+  file,
 } from "../controllers/MaterialController.js";
 import { verifyUser, assistantOnly } from "../middlewares/AuthUser.js";
 import { generateMaterialNumber as GMN } from "../middlewares/GenerateUniqueCode.js";
@@ -15,6 +16,7 @@ const router = express.Router({ mergeParams: true });
 router.use(verifyUser);
 router.get("/", index);
 router.get("/:material_number", show);
+router.get("/:material_number/file", file);
 router.use(assistantOnly);
 router.post("/", GMN, UploadFile.single("material"), store);
 router.patch("/:material_number", update);

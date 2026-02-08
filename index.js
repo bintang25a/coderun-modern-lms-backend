@@ -10,9 +10,6 @@ process.stderr.write = function (chunk, encoding, callback) {
 };
 
 import express from "express";
-import fs from "fs";
-import { fileURLToPath } from "url";
-import path from "path";
 import dotenv from "dotenv";
 import cors from "./config/cors.js";
 
@@ -56,6 +53,7 @@ io.on("connection", (socket) => {
 
 app.use(cors);
 app.use(express.json());
+
 app.use((req, res, next) => {
   const start = Date.now();
 
@@ -85,18 +83,6 @@ app.use("/assignments/:class_code", AssignmentRoute);
 app.use("/testcases/:assignment_number", TestcaseRoute);
 app.use("/submissions/:assignment_number", SubmissionRoute);
 app.use(ActionsRoute);
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use(
-  "/users/photo",
-  express.static(path.join(__dirname, "public/profiles"))
-);
-
-const profilesPath = "./public/profiles";
-if (!fs.existsSync(profilesPath)) {
-  fs.mkdirSync(profilesPath, { recursive: true });
-}
 
 httpServer.listen(port, () =>
   console.log(`Server run on http://localhost:${port}`)

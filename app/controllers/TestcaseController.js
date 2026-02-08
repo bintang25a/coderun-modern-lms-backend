@@ -48,7 +48,7 @@ export const store = async (req, res) => {
   }
 
   try {
-    await Testcase.create({
+    const testcase = await Testcase.create({
       assignment_number,
       name,
       weight: Number(weight),
@@ -58,6 +58,7 @@ export const store = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Create testcase successfully",
+      data: testcase?.testcase_number,
     });
   } catch (error) {
     console.log(error.message);
