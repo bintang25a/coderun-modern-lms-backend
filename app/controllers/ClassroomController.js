@@ -1,8 +1,18 @@
 import { Classroom } from "../../database/models/Model.js";
 
 export const index = async (req, res) => {
+  const filters = req.query;
+  const whereClause = {};
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      whereClause[key] = value;
+    }
+  });
+
   try {
     const classrooms = await Classroom.findAll({
+      where: whereClause,
       include: [
         {
           association: Classroom.associations.assistants,
@@ -53,11 +63,16 @@ export const index = async (req, res) => {
 
 export const show = async (req, res) => {
   const { class_code } = req?.params;
+
+  if (!class_code) {
+    return res.status(400).json({
+      success: false,
+      message: "Display classroom failed, Params not found",
+    });
+  }
+
   try {
-    const classroom = await Classroom.findOne({
-      where: {
-        class_code,
-      },
+    const classroom = await Classroom.findByPk(class_code, {
       include: [
         {
           association: Classroom.associations.assistants,
@@ -178,11 +193,14 @@ export const update = async (req, res) => {
   const { class_code } = req?.params;
   const { name } = req?.body;
 
-  const classroom = await Classroom.findOne({
-    where: {
-      class_code,
-    },
-  });
+  if (!class_code) {
+    return res.status(400).json({
+      success: false,
+      message: "Update classroom failed, Params cannot empty",
+    });
+  }
+
+  const classroom = await Classroom.findByPk(class_code, {});
 
   if (!classroom) {
     return res.status(404).json({
@@ -233,11 +251,7 @@ export const destroy = async (req, res) => {
     });
   }
 
-  const classroom = await Classroom.findOne({
-    where: {
-      class_code,
-    },
-  });
+  const classroom = await Classroom.findByPk(class_code, {});
 
   if (!classroom) {
     return res.status(404).json({

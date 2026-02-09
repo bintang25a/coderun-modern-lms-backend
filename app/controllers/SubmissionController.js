@@ -3,12 +3,20 @@ import fs from "fs";
 import path from "path";
 
 export const index = async (req, res) => {
-  const whereClause = {};
-  const { assignment_number } = req?.params;
+  const { assignment_number } = req.params;
+  const filters = req.query;
 
-  if (assignment_number && assignment_number !== "admin") {
+  const whereClause = {};
+
+  if (assignment_number && !filters) {
     whereClause.assignment_number = assignment_number;
   }
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      whereClause[key] = value;
+    }
+  });
 
   try {
     const submissions = await Submission.findAll({
@@ -105,6 +113,65 @@ export const show = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Display submission failed",
+    });
+  }
+};
+
+export const file = async (req, res) => {
+  const whereClause = {};
+  const { assignment_number, submission_number } = req?.params;
+
+  if (assignment_number && assignment_number !== "admin") {
+    whereClause.assignment_number = assignment_number;
+  }
+
+  if (submission_number) {
+    whereClause.submission_number = submission_number;
+  }
+
+  try {
+    const submission = await Submission.findOne({
+      where: whereClause,
+    });
+
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: "Show subsmission failed, Subsmission not found",
+      });
+    }
+
+    const filePath = path.join(__dirname, "../../", submission.answer);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Show submission failed, File not found",
+      });
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+    const codeExtensions = [".c", ".cpp", ".java", ".py"];
+
+    let contentType = "application/octet-stream";
+
+    if (ext === ".pdf") {
+      contentType = "application/pdf";
+    } else if (codeExtensions.includes(ext)) {
+      contentType = "text/plain";
+    }
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", "inline");
+    res.setHeader("Content-Length", fs.statSync(filePath).size);
+
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to stream submission",
     });
   }
 };

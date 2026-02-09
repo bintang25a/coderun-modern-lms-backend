@@ -3,12 +3,20 @@ import fs from "fs";
 import path from "path";
 
 export const index = async (req, res) => {
-  const whereClause = {};
-  const { class_code } = req?.params;
+  const { class_code } = req.params;
+  const filters = req.query;
 
-  if (class_code && class_code !== "admin") {
+  const whereClause = {};
+
+  if (class_code && !filters) {
     whereClause.class_code = class_code;
   }
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      whereClause[key] = value;
+    }
+  });
 
   try {
     const assignments = await Assignment.findAll({

@@ -7,8 +7,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const index = async (req, res) => {
+  const filters = req.query;
+  const whereClause = {};
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      whereClause[key] = value;
+    }
+  });
+
   try {
     const materials = await Material.findAll({
+      where: whereClause,
       include: [
         {
           association: Material.associations.classrooms,
@@ -46,10 +56,7 @@ export const show = async (req, res) => {
   }
 
   try {
-    const material = await Material.findOne({
-      where: {
-        material_number,
-      },
+    const material = await Material.findByPk(material_number, {
       include: [
         {
           association: Material.associations.classrooms,
@@ -94,9 +101,7 @@ export const file = async (req, res) => {
   }
 
   try {
-    const material = await Material.findOne({
-      where: { material_number },
-    });
+    const material = await Material.findByPk(material_number, {});
 
     if (!material) {
       return res.status(404).json({
@@ -177,11 +182,14 @@ export const update = async (req, res) => {
   const { material_number } = req?.params;
   const { title } = req?.body;
 
-  const material = await Material.findOne({
-    where: {
-      material_number,
-    },
-  });
+  if (!material_number) {
+    return res.status(400).json({
+      success: false,
+      message: "Update material failed, Params cannot empty",
+    });
+  }
+
+  const material = await Material.findByPk(material_number, {});
 
   if (!material) {
     return res.status(404).json({
@@ -240,11 +248,7 @@ export const destroy = async (req, res) => {
     });
   }
 
-  const material = await Material.findOne({
-    where: {
-      material_number,
-    },
-  });
+  const material = await Material.findByPk({});
 
   if (!material) {
     return res.status(404).json({

@@ -2,6 +2,7 @@ import express from "express";
 import {
   index,
   show,
+  file,
   store,
   update,
   destroy,
@@ -15,6 +16,7 @@ const router = express.Router({ mergeParams: true });
 router.use(verifyUser);
 router.get("/", index);
 router.get("/:submission_number", show);
+router.get("/:submission_number/file", file);
 router.post("/", uploadAnswer.single("answer"), GSN, store);
 router.patch("/:submission_number", uploadAnswer.single("answer"), update);
 router.delete("/:submission_number", destroy);

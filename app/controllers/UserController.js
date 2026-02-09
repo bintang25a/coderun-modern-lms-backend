@@ -52,45 +52,27 @@ export const show = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({
-      where: {
-        uid,
-      },
+    const user = await User.findByPk(uid, {
       attributes: {
         exclude: req.role == "Admin" ? [] : ["password"],
       },
       include: [
-        req.role === "Praktikan"
-          ? {
-              association: User.associations.classrooms,
-              as: "classrooms",
-              attributes: ["class_code", "name"],
-              through: {
-                attributes: [],
-              },
-              include: [
-                {
-                  association: "assistants",
-                  attributes: ["uid", "name"],
-                  through: { attributes: [] },
-                },
-              ],
-            }
-          : {
-              association: User.associations.assists,
-              as: "assists",
-              attributes: ["class_code", "name"],
-              through: {
-                attributes: [],
-              },
-              include: [
-                {
-                  association: "assistants",
-                  attributes: ["uid", "name"],
-                  through: { attributes: [] },
-                },
-              ],
+        {
+          association:
+            req.role === "Praktikan"
+              ? User.associations.classrooms
+              : User.associations.assists,
+          as: req.role === "Praktikan" ? "classrooms" : "assists",
+          attributes: ["class_code", "name"],
+          through: { attributes: [] },
+          include: [
+            {
+              association: "assistants",
+              attributes: ["uid", "name"],
+              through: { attributes: [] },
             },
+          ],
+        },
       ],
     });
 
@@ -186,11 +168,7 @@ export const update = async (req, res) => {
 
   const { name, phone_number, email, role, password } = req.body;
 
-  const user = await User.findOne({
-    where: {
-      uid,
-    },
-  });
+  const user = await User.findByPk(uid, {});
 
   if (!user) {
     return res.status(404).json({
@@ -273,11 +251,7 @@ export const destroy = async (req, res) => {
     });
   }
 
-  const user = await User.findOne({
-    where: {
-      uid,
-    },
-  });
+  const user = await User.findByPk(uid, {});
 
   if (!user) {
     return res.status(404).json({
