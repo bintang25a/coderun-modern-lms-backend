@@ -110,7 +110,9 @@ export const file = async (req, res) => {
       });
     }
 
-    const filePath = path.join(__dirname, "../../", material.material);
+    const filePath = path
+      .join(__dirname, "../../", material.material)
+      .replace(/\\/g, "/");
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({

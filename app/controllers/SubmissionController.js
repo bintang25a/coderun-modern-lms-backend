@@ -1,6 +1,10 @@
 import { Submission } from "../../database/models/Model.js";
-import fs from "fs";
+import { fileURLToPath } from "url";
 import path from "path";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const index = async (req, res) => {
   const { assignment_number } = req.params;
@@ -121,18 +125,12 @@ export const file = async (req, res) => {
   const whereClause = {};
   const { assignment_number, submission_number } = req?.params;
 
-  if (assignment_number && assignment_number !== "admin") {
+  if (assignment_number) {
     whereClause.assignment_number = assignment_number;
   }
 
-  if (submission_number) {
-    whereClause.submission_number = submission_number;
-  }
-
   try {
-    const submission = await Submission.findOne({
-      where: whereClause,
-    });
+    const submission = await Submission.findByPk(submission_number, {});
 
     if (!submission) {
       return res.status(404).json({
@@ -141,7 +139,9 @@ export const file = async (req, res) => {
       });
     }
 
-    const filePath = path.join(__dirname, "../../", submission.answer);
+    const filePath = path
+      .join(__dirname, "../../", submission?.answer)
+      .replace(/\\/g, "/");
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
