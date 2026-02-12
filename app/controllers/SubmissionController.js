@@ -99,18 +99,10 @@ export const show = async (req, res) => {
       });
     }
 
-    const answer = submission?.answer?.replace(/\\/g, "/");
-    const code = fs.existsSync(answer)
-      ? fs.readFileSync(answer, "utf-8")
-      : null;
-
     res.status(200).json({
       success: true,
       message: "Display submission successfully",
-      data: {
-        ...submission.toJSON(),
-        code,
-      },
+      data: submission,
     });
   } catch (error) {
     console.log(error.message);
