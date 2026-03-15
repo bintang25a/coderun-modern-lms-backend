@@ -12,7 +12,10 @@ process.stderr.write = function (chunk, encoding, callback) {
 import express from "express";
 import dotenv from "dotenv";
 import cors from "./config/cors.js";
+import path from "path";
+import fs from "fs";
 
+import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
@@ -83,6 +86,30 @@ app.use("/assignments/:class_code", AssignmentRoute);
 app.use("/testcases/:assignment_number", TestcaseRoute);
 app.use("/submissions/:assignment_number", SubmissionRoute);
 app.use(ActionsRoute);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const databaseDir = path.join(__dirname, "database");
+const resourceDir = path.join(databaseDir, "resource");
+
+const languages = ["c", "cpp", "java", "python"];
+
+const ensureDirectories = () => {
+  try {
+    fs.mkdirSync(resourceDir, { recursive: true });
+
+    languages.forEach((lang) => {
+      const langDir = path.join(resourceDir, lang);
+      fs.mkdirSync(langDir, { recursive: true });
+    });
+
+    console.log("Resource directories ready");
+  } catch (error) {
+    console.error("Failed to initialize resource directories:", error);
+  }
+};
+ensureDirectories();
 
 httpServer.listen(port, () =>
   console.log(`Server run on http://localhost:${port}`)
