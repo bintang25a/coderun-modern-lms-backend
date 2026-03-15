@@ -68,6 +68,111 @@ export const parseCode = async (parser, filePath) => {
   return counter;
 };
 
+export const compileCode = async ({ uid, language, codePath, executeName }) => {
+  const normalizedPath = codePath.replace(/\\/g, "/");
+  const absoluteCodePath = path.resolve(BASE_DIR, normalizedPath);
+  const tempDir = path.resolve(BASE_DIR, "temp", uid);
+
+  fs.mkdirSync(tempDir, { recursive: true });
+
+  const codeContent = fs.readFileSync(absoluteCodePath, "utf8");
+
+  let filename;
+  let compileCmd;
+  let binaryName = executeName;
+
+  switch (language) {
+    case "c":
+      filename = `${executeName}.c`;
+      compileCmd = `gcc ${filename} -o ${binaryName}`;
+      break;
+
+    case "cpp":
+      filename = `${executeName}.cpp`;
+      compileCmd = `g++ ${filename} -o ${binaryName}`;
+      break;
+
+    case "python":
+      filename = `${executeName}.py`;
+      binaryName = filename; // python tidak perlu compile
+      break;
+
+    default:
+      throw new Error("Unsupported language");
+  }
+
+  const sourcePath = path.join(tempDir, filename);
+  fs.writeFileSync(sourcePath, codeContent);
+
+  if (language === "python") {
+    return {
+      binaryPath: sourcePath,
+      tempDir,
+      runCmd: `python3 ${filename}`,
+    };
+  }
+
+  await new Promise((resolve, reject) => {
+    const compile = spawn("bash", ["-c", compileCmd], { cwd: tempDir });
+
+    compile.on("exit", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error("Compilation failed"));
+    });
+  });
+
+  return {
+    binaryPath: path.join(tempDir, binaryName),
+    tempDir,
+    runCmd: `./${binaryName}`,
+  };
+};
+
+export const runBinary = async ({ runCmd, input, tempDir, timeLimit }) => {
+  return new Promise((resolve) => {
+    const child = spawn("bash", ["-c", runCmd], { cwd: tempDir });
+
+    let output = "";
+    let finished = false;
+
+    child.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    child.stderr.on("data", (data) => {
+      output += data.toString();
+    });
+
+    if (input) {
+      child.stdin.write(input);
+      child.stdin.end();
+    }
+
+    const timer = setTimeout(() => {
+      if (!finished) {
+        finished = true;
+        child.kill();
+        resolve({
+          success: false,
+          output,
+          message: "Execution timed out",
+        });
+      }
+    }, timeLimit);
+
+    child.on("close", () => {
+      if (!finished) {
+        finished = true;
+        clearTimeout(timer);
+        resolve({
+          success: true,
+          output: output.trim(),
+        });
+      }
+    });
+  });
+};
+
 export const executeCode = async (param) => {
   const {
     uid,

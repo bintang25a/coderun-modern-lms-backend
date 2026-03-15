@@ -1,6 +1,6 @@
 import fs from "fs";
 import { hybridSimilarity } from "./support-similarity.js";
-import { normalizeCounter, executeCode } from "./support.js";
+import { normalizeCounter, compileCode, runBinary } from "./support.js";
 
 export const runTestCases = async (param) => {
   const {
@@ -14,13 +14,19 @@ export const runTestCases = async (param) => {
   } = param;
 
   const result = {};
-  const executions = await testCases.map((tc) =>
-    executeCode({
-      uid,
-      language,
-      codePath,
+
+  const compiled = await compileCode({
+    uid,
+    language,
+    codePath,
+    executeName,
+  });
+
+  const executions = testCases.map((tc) =>
+    runBinary({
+      runCmd: compiled.runCmd,
       input: tc.input || "",
-      executeName: `${executeName}_${tc.name.trim()}`,
+      tempDir: compiled.tempDir,
       timeLimit,
     }).then((actual) => ({
       tc,
